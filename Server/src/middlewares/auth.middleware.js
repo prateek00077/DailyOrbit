@@ -5,12 +5,12 @@ const verifyToken = async(req, res, next) => {
     try {
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","");
 
-        if(!token) throw new Error("Unauthorized token");
+        if(!token) return res.status(400).json("Unauthorized token");
 
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
 
         const user = await User.findById(decodedToken?._id).select("-password -refreshToken")
-        if(!user) throw new Error("Invalid access token");
+        if(!user) return res.status(400).json("Invalid access token");
         req.user = user ;
         next()
     } catch (error) {

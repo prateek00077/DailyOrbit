@@ -1,10 +1,11 @@
 //Here i have to define four major functions
 //1. createCategory
 //2. getAllCategories
-//3. getOneCategory
 //4. deleteCategory
 
 import { Category } from "../models/category.model.js";
+import { Progress } from "../models/progress.model.js";
+import { Task } from "../models/task.model.js";
 
 //function for creating new category
 const createCategory = async (req, res) => {
@@ -53,5 +54,43 @@ const createCategory = async (req, res) => {
   }
 };
 
+//function for getting all the categories
+const getAllCategories = async (req,res)=>{
+  //first we have to get verify the user to get user that is done by middleware
+  const userId = req.user._id;
+  
+  if(!userId) return res.status(401).json({message: "user not found"});
 
-export {createCategory}
+  const categories = await Category.find({userId});
+
+  if(!categories) return res.status(500).json("Internal server error");
+
+  return res.status(200).json({
+    categories,
+    message: "categories fetched successfully"
+  });
+}
+
+//function for deleting category
+const deleteCategory = async(req,res)=>{
+  //we get the user by middleware
+  try {
+    const userId = req.user?._id;
+    const {title} = req.body;
+    const categoryTobeDeleted = await Category.findOne({title});
+
+    if(!categoryTobeDeleted) return res.status(400).json("No category found by this name");
+    
+    if(!userId) return res.status(400).json("No user found");
+
+    await Task.deleteMany({categoryId: categoryTobeDeleted._id});
+    await Progress.deleteMany({categoryId: categoryTobeDeleted._id});
+
+    await Category.deleteOne({_id: categoryTobeDeleted._id});
+
+    return res.status(200).json("Category deleted successfully");
+  } catch (error) {
+    throw new Error("Message: ",error.message);
+  }
+}
+export {createCategory,getAllCategories,deleteCategory}

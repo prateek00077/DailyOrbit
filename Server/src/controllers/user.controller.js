@@ -63,18 +63,18 @@ const loginUser = async(req,res)=>{
     const {username,email,password} = req.body;
 
     //validation
-    if(!username.trim() && !email.trim()){
-        throw new Error(400,"usrname or email is required");
+    if(!(username?.trim()) && !(email?.trim())){
+        return res.status(400).json("usrname or email is required");
     }
 
     //check if password is there
-    if(!password.trim()) throw new Error(400,"password is required to log in");
+    if(!password?.trim()) throw new Error(400,"password is required to log in");
 
     //Now we will find the the user who's having the same email or username
     const user = await User.findOne({$or : [{username},{email}]});
 
     //checking if user is there or not
-    if(!user) throw new Error(400,"User does not exist");
+    if(!user) return res.status(400).json("User does not exist");
 
     //checking if password is valid or not
     const isPasswordValid = await user.isPasswordCorrect(password);
