@@ -85,7 +85,6 @@ const deleteCategory = async(req,res)=>{
 
     await Task.deleteMany({categoryId: categoryTobeDeleted._id});
     await Progress.deleteMany({categoryId: categoryTobeDeleted._id});
-
     await Category.deleteOne({_id: categoryTobeDeleted._id});
 
     return res.status(200).json("Category deleted successfully");
