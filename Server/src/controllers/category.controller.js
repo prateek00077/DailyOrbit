@@ -92,4 +92,5 @@ const deleteCategory = async(req,res)=>{
     throw new Error("Message: ",error.message);
   }
 }
+
 export {createCategory,getAllCategories,deleteCategory}

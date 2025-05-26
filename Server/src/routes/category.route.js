@@ -4,8 +4,9 @@ import verifyToken from "../middlewares/auth.middleware.js";
 
 const categoryRouter = Router();
 
-categoryRouter.route("/create").post(verifyToken, createCategory);
-categoryRouter.route("/get").post(verifyToken, getAllCategories);
-categoryRouter.route("/delete").post(verifyToken,deleteCategory);
+categoryRouter.use(verifyToken);
+categoryRouter.route("/create").post(createCategory);
+categoryRouter.route("/get").get(getAllCategories);
+categoryRouter.route("/delete").delete(deleteCategory);
 
 export default categoryRouter;
