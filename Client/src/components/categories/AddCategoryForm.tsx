@@ -25,10 +25,11 @@ interface AddCategoryFormProps {
 }
 
 const AddCategoryForm: React.FC<AddCategoryFormProps> = ({ onCancel }) => {
-  const { addNewCategory } = useApp();
+  const { addNewCategory, user } = useApp();
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('Briefcase');
   const [color, setColor] = useState('#4F46E5');
+  const isDarkMode = user.preferences.darkMode;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,12 +45,12 @@ const AddCategoryForm: React.FC<AddCategoryFormProps> = ({ onCancel }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl p-5 shadow-sm mb-6 animate-fadeIn">
-      <h3 className="font-medium text-gray-800 mb-4">Add New Category</h3>
+    <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl p-5 shadow-sm mb-6 animate-fadeIn`}>
+      <h3 className={`font-medium mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Add New Category</h3>
       
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="name" className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
             Category Name
           </label>
           <input
@@ -57,14 +58,18 @@ const AddCategoryForm: React.FC<AddCategoryFormProps> = ({ onCancel }) => {
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+              isDarkMode
+                ? 'bg-gray-900 border-gray-700 text-gray-100 placeholder-gray-400'
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+            }`}
             placeholder="e.g., Work, Personal, Health"
             required
           />
         </div>
         
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
             Icon
           </label>
           <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
@@ -77,8 +82,12 @@ const AddCategoryForm: React.FC<AddCategoryFormProps> = ({ onCancel }) => {
                   onClick={() => setIcon(iconName)}
                   className={`p-2 rounded-lg flex items-center justify-center ${
                     icon === iconName 
-                      ? 'bg-indigo-100 text-indigo-600 ring-2 ring-indigo-500' 
-                      : 'hover:bg-gray-100 text-gray-600'
+                      ? (isDarkMode 
+                          ? 'bg-indigo-900 text-indigo-400 ring-2 ring-indigo-700' 
+                          : 'bg-indigo-100 text-indigo-600 ring-2 ring-indigo-500')
+                      : (isDarkMode 
+                          ? 'hover:bg-gray-700 text-gray-400'
+                          : 'hover:bg-gray-100 text-gray-600')
                   }`}
                 >
                   {IconComponent && <IconComponent size={20} />}
@@ -89,7 +98,7 @@ const AddCategoryForm: React.FC<AddCategoryFormProps> = ({ onCancel }) => {
         </div>
         
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
             Color
           </label>
           <div className="flex flex-wrap gap-2">
@@ -99,7 +108,11 @@ const AddCategoryForm: React.FC<AddCategoryFormProps> = ({ onCancel }) => {
                 type="button"
                 onClick={() => setColor(colorOption)}
                 className={`w-8 h-8 rounded-full ${
-                  color === colorOption ? 'ring-2 ring-offset-2 ring-gray-400' : ''
+                  color === colorOption 
+                    ? (isDarkMode 
+                        ? 'ring-2 ring-offset-2 ring-gray-600' 
+                        : 'ring-2 ring-offset-2 ring-gray-400')
+                    : ''
                 }`}
                 style={{ backgroundColor: colorOption }}
               />
@@ -111,7 +124,11 @@ const AddCategoryForm: React.FC<AddCategoryFormProps> = ({ onCancel }) => {
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            className={`px-4 py-2 border rounded-lg transition-colors ${
+              isDarkMode
+                ? 'border-gray-700 text-gray-300 hover:bg-gray-700'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
           >
             Cancel
           </button>
