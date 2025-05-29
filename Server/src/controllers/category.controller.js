@@ -93,4 +93,24 @@ const deleteCategory = async(req,res)=>{
   }
 }
 
-export {createCategory,getAllCategories,deleteCategory}
+// In category.controller.js
+const deleteCategoryById = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+    const { id } = req.params;
+    const categoryTobeDeleted = await Category.findOne({ _id: id, userId });
+
+    if (!categoryTobeDeleted) return res.status(400).json("No category found by this id");
+    if (!userId) return res.status(400).json("No user found");
+
+    await Task.deleteMany({ categoryId: categoryTobeDeleted._id });
+    await Progress.deleteMany({ categoryId: categoryTobeDeleted._id });
+    await Category.deleteOne({ _id: categoryTobeDeleted._id });
+
+    return res.status(200).json("Category deleted successfully");
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export {createCategory,getAllCategories,deleteCategory,deleteCategoryById}

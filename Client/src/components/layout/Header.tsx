@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Bell, Settings, LogOut } from 'lucide-react';
+import { Menu, Bell, Settings, LogOut, CircleUserRound } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { MdOutlineMenuOpen } from "react-icons/md";
@@ -12,7 +12,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
   const { user, logout } = useApp();
   const [scrolled, setScrolled] = useState(false);
-  const isDarkMode = user.preferences.darkMode;
+  const isDarkMode = user?.preferences?.darkMode?? false;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -94,15 +94,18 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
             >
               <LogOut size={20} />
             </button>
-            <div className="flex items-center">
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className={`h-8 w-8 rounded-full object-cover ${
-                  isDarkMode ? 'border-gray-700' : 'border-gray-200'
-                } border`}
-              />
-            </div>
+
+            <button
+              className={`p-2 rounded-full ${
+                isDarkMode
+                  ? 'text-gray-400 hover:bg-gray-700'
+                  : 'text-gray-500 hover:bg-gray-100'
+              } transition-colors`}
+              title="User"
+            >
+              <CircleUserRound size={20}/>
+            </button>
+            
           </div>
         </div>
       </div>

@@ -10,59 +10,47 @@ I have to write following controllers for the task
 import { Category } from "../models/category.model.js";
 import { Task } from "../models/task.model.js";
 
-//function for creating a task
-const createTask = async(req,res) => {
-    const userId = req.user?._id;
-    const {title,date,category} = req.body;
+// function for creating a task
+const createTask = async (req, res) => {
+  const userId = req.user?._id;
+  const { title, categoryId, status, date } = req.body;
 
-    try {
-        if(!userId) return res.status(400).json({message:"user not found"});
+  try {
+    if (!userId) return res.status(400).json({ message: "user not found" });
+    if (!categoryId) return res.status(400).json({ message: "Please provide categoryId" });
+    if (!title) return res.status(400).json({ message: "Please provide task title" });
 
-        if(!category) return res.status(400).json({message:"Please provide category"});
-
-        if(!title) return res.status(400).json({message: "Please provide task title"});
-
-        let existingCategory = await Category.findOne({title: category});
-
-        if(!existingCategory){
-            existingCategory = new Category({
-            title: category,
-            userId,
-            description: "",
-            colorCode: "#000000", // default color
-            date: new Date(), // or req.body.date if needed
-            });
-
-            await existingCategory.save();
-        }
-
-        const taskExist = await Task.findOne({$and: [{title:title},{categoryId:existingCategory._id}]});
-
-        if(taskExist) return res.status(400).json({message:"Task aleady exist"});
-
-        if(!existingCategory) return res.status(500).json("Internal server error");
-
-        const newTask = new Task({
-            title,
-            userId,
-            categoryId: existingCategory._id,
-            date
-        });
-
-        const savedTask = await newTask.save();
-        return res.status(200).json({
-            _id: savedTask._id,
-            title: savedTask.title,
-            userId: savedTask.userId,
-            categoryId: savedTask.categoryId,
-            date: savedTask.date,
-            message: "Task created successfully"
-        })
-
-    } catch (error) {
-        throw new Error(error.message);
+    // Optionally, check if the category exists for this user
+    const existingCategory = await Category.findOne({ _id: categoryId, userId });
+    if (!existingCategory) {
+      return res.status(400).json({ message: "Category not found for this user" });
     }
-}
+
+    // Check for duplicate task title in the same category for this user
+    const duplicateTask = await Task.findOne({ 
+      title: title.trim(), 
+      categoryId, 
+      userId 
+    });
+    if (duplicateTask) {
+      return res.status(409).json({ message: "A task with this title already exists in this category." });
+    }
+
+    const newTask = new Task({
+      title: title.trim(),
+      categoryId,
+      status: status || "pending",
+      userId,
+      date: date || new Date(),
+    });
+
+    const savedTask = await newTask.save();
+
+    return res.status(201).json(savedTask);
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error while creating task", error: error.message });
+  }
+};
 
 // function for Updating a task
 const updateTask = async (req, res) => {
@@ -106,7 +94,7 @@ const getAllTasks = async(req,res) => {
 
     return res.status(200)
     .json({
-        allTasks,
+        tasks: allTasks,
         message: "tasks fetched successfully"
     })
 }

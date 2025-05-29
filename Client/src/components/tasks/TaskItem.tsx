@@ -10,7 +10,7 @@ interface TaskItemProps {
 const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
   const { removeTask, user } = useApp();
   const [isHovered, setIsHovered] = useState(false);
-  const isDarkMode = user.preferences.darkMode;
+  const isDarkMode = user?.preferences?.darkMode??false;
   
   const formattedDate = new Date(task.createdAt).toLocaleDateString('en-US', {
     month: 'short',
@@ -18,7 +18,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
   });
 
   const handleDelete = () => {
-    removeTask(task.id);
+    removeTask(task._id);
   };
 
   return (
@@ -33,7 +33,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
     >
       <div className="flex items-start">
         <div className="flex-shrink-0 pt-0.5">
-          {task.completed ? (
+          {(task.status === 'completed') ? (
             <CheckCircle size={20} className="text-green-500" />
           ) : (
             <Circle size={20} className={isDarkMode ? 'text-gray-500' : 'text-gray-300'} />
@@ -41,17 +41,13 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
         </div>
         <div className="ml-3 flex-1 min-w-0">
           <p className={`text-sm font-medium ${
-            task.completed 
+            (task.status === 'completed') 
               ? isDarkMode ? 'text-gray-500 line-through' : 'text-gray-400 line-through'
               : isDarkMode ? 'text-gray-200' : 'text-gray-700'
           }`}>
             {task.title}
           </p>
-          {task.description && (
-            <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-1 truncate`}>
-              {task.description}
-            </p>
-          )}
+          {/** Task description was here */}
           <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} mt-1`}>
             {formattedDate}
           </p>

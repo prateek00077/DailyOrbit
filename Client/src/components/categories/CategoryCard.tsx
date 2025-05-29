@@ -14,10 +14,10 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
   const { tasks, removeCategory, user } = useApp();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAddingTask, setIsAddingTask] = useState(false);
-  const isDarkMode = user.preferences.darkMode;
+  const isDarkMode = user?.preferences?.darkMode??false;
 
   const categoryTasks = tasks.filter(task => task.categoryId === category.id);
-  const completedTasks = categoryTasks.filter(task => task.completed).length;
+  const completedTasks = categoryTasks.filter(task => (task.status === 'completed')).length;
   const totalTasks = categoryTasks.length;
   
   const IconComponent = (LucideIcons as any)[category.icon] || LucideIcons.Folder;

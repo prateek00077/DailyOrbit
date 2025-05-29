@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 
 const DashboardStats: React.FC = () => {
   const { tasks, user } = useApp();
-  const isDarkMode = user.preferences.darkMode;
+  const isDarkMode = user?.preferences?.darkMode??false;
   
   const stats = [
     {
@@ -15,13 +15,13 @@ const DashboardStats: React.FC = () => {
     },
     {
       title: 'Completed',
-      value: tasks.filter(task => task.completed).length,
+      value: tasks.filter(task => task.status === "completed").length,
       icon: <CheckCircle size={24} className="text-green-500" />,
       color: 'bg-green-100',
     },
     {
       title: 'Pending',
-      value: tasks.filter(task => !task.completed).length,
+      value: tasks.filter(task => !(task.status === "completed")).length,
       icon: <Clock size={24} className="text-amber-500" />,
       color: 'bg-amber-100',
     },

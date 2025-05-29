@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 
 const Footer: React.FC = () => {
   const { user } = useApp();
-  const isDarkMode = user.preferences.darkMode;
+  const isDarkMode = user?.preferences?.darkMode??false;
 
   return (
     <footer className={`${

@@ -29,7 +29,7 @@ const AddCategoryForm: React.FC<AddCategoryFormProps> = ({ onCancel }) => {
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('Briefcase');
   const [color, setColor] = useState('#4F46E5');
-  const isDarkMode = user.preferences.darkMode;
+  const isDarkMode = user?.preferences?.darkMode??false;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -8,7 +8,7 @@ import { useApp } from '../../context/AppContext';
 const MainLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user } = useApp();
-  const isDarkMode = user.preferences.darkMode;
+  const isDarkMode = user?.preferences?.darkMode ??false;
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);

@@ -3,7 +3,12 @@ import { useApp } from '../../context/AppContext';
 
 const SettingsForm: React.FC = () => {
   const { user, updateUserPreferences } = useApp();
-  const { preferences } = user;
+  // Defensive: handle case where user or preferences may be undefined
+  const preferences = user?.preferences ?? {
+    darkMode: false,
+    notifications: false,
+    compactView: false,
+  };
   const isDarkMode = preferences.darkMode;
 
   const handleToggle = (key: keyof typeof preferences) => {
@@ -79,14 +84,13 @@ const SettingsForm: React.FC = () => {
           <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} mb-4`}>Account</h3>
           <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 rounded-lg`}>
             <div className="flex items-center">
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className={`h-12 w-12 rounded-full object-cover border ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}
-              />
+              {/* Remove avatar and name if not present in user */}
               <div className="ml-4">
-                <p className={`font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{user.name}</p>
-                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{user.email}</p>
+                <p className={`font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{user?.fullname || 'User'}</p>
+                {/* If you have email in user, show it */}
+                {user?.email && (
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{user.email}</p>
+                )}
               </div>
             </div>
           </div>

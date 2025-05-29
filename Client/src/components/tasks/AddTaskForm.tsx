@@ -7,22 +7,36 @@ interface AddTaskFormProps {
 }
 
 const AddTaskForm: React.FC<AddTaskFormProps> = ({ categoryId, onCancel }) => {
-  const { addNewTask, user } = useApp();
+  const { addNewTask, user, categories } = useApp();
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const isDarkMode = user.preferences.darkMode;
+  const [status, setStatus] = useState('pending');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const isDarkMode = user?.preferences?.darkMode;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const categoryObj = categories.find(cat => cat.id === categoryId);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (title.trim()) {
-      addNewTask({
+    setError(null);
+    if (!title.trim() || !categoryObj) return;
+    setLoading(true);
+    try {
+      await addNewTask({
         title: title.trim(),
-        description: description.trim(),
-        completed: false,
-        categoryId,
+        categoryId: categoryObj.id,
+        status,
       });
+      setLoading(false);
       onCancel();
+    } catch (err: any) {
+      setLoading(false);
+      // If addNewTask throws, show error
+      if (err?.message?.includes('already exists')) {
+        setError('A task with this title already exists in this category.');
+      } else {
+        setError('Failed to add task. Please try again.');
+      }
     }
   };
 
@@ -44,18 +58,23 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ categoryId, onCancel }) => {
           />
         </div>
         <div className="mb-3">
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Description (optional)"
-            className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none
+          <select
+            value={status}
+            onChange={e => setStatus(e.target.value)}
+            className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
               ${isDarkMode 
-                ? 'bg-gray-900 border-gray-700 text-gray-100 placeholder-gray-400'
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                ? 'bg-gray-900 border-gray-700 text-gray-100'
+                : 'bg-white border-gray-300 text-gray-900'
               }`}
-            rows={2}
-          />
+          >
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+            <option value="in-progress">in-progress</option>
+          </select>
         </div>
+        {error && (
+          <div className="mb-3 text-red-500 text-sm">{error}</div>
+        )}
         <div className="flex justify-end space-x-2">
           <button
             type="button"
@@ -65,14 +84,16 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ categoryId, onCancel }) => {
                 ? 'border-gray-700 text-gray-300 hover:bg-gray-700'
                 : 'border-gray-300 text-gray-700 hover:bg-gray-100'
               }`}
+            disabled={loading}
           >
             Cancel
           </button>
           <button
             type="submit"
             className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            disabled={loading}
           >
-            Add Task
+            {loading ? 'Adding...' : 'Add Task'}
           </button>
         </div>
       </form>

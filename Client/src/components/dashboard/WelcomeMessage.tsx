@@ -21,7 +21,7 @@ const WelcomeMessage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between">
         <div className="mb-4 md:mb-0">
           <h1 className="text-2xl md:text-3xl font-bold text-white">
-            {greeting}, {user.name}!
+            {greeting}, {user?.fullname}!
           </h1>
           <p className="text-indigo-100 mt-2">
             Welcome to your daily task planner. Here's your progress for today.

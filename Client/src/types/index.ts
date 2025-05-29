@@ -1,10 +1,9 @@
 export interface Task {
-  id: string;
+  _id: string;
   title: string;
-  description: string;
-  completed: boolean;
-  createdAt: string;
   categoryId: string;
+  status: string;
+  createdAt: string;
 }
 
 export interface Category {
@@ -15,9 +14,9 @@ export interface Category {
 }
 
 export interface User {
-  name: string;
+  _id: string;
+  fullname: string;
   email: string;
-  avatar: string;
   preferences: {
     darkMode: boolean;
     notifications: boolean;

@@ -90,19 +90,22 @@ const loginUser = async(req,res)=>{
         await User.findByIdAndUpdate(user._id, {refreshToken});
 
         //sending response
-        return res.status(200).
-        cookie("accessToken", accessToken, {
+        return res.status(200)
+        .cookie("accessToken", accessToken, {
             httpOnly: true,
             secure: true
-        }).
-        cookie("refreshToken", refreshToken, {
+        })
+        .cookie("refreshToken", refreshToken, {
             httpOnly: true,
-            secure : true
-        }).json({
+            secure: true
+        })
+        .json({
+            user: {
             _id: user._id,
             username: user.username,
             fullname: user.fullname,
-            email: user.email,
+            email: user.email
+            },
             message: "User logged in successfully",
             accessToken,
             refreshToken,

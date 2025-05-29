@@ -8,7 +8,7 @@ interface TaskListProps {
 
 const TaskList: React.FC<TaskListProps> = ({ categoryId }) => {
   const { tasks, user } = useApp();
-  const isDarkMode = user.preferences.darkMode;
+  const isDarkMode = user?.preferences?.darkMode??false;
 
   // Filter tasks by category if categoryId is provided
   const filteredTasks = categoryId 
@@ -27,7 +27,7 @@ const TaskList: React.FC<TaskListProps> = ({ categoryId }) => {
     <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-amber-50'} rounded-2xl p-6`}>
       <div className="space-y-2">
         {filteredTasks.map(task => (
-          <TaskItem key={task.id} task={task} />
+          <TaskItem key={task._id} task={task} />
         ))}
       </div>
     </div>
