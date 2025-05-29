@@ -7,7 +7,7 @@ interface AppContextType {
   tasks: Task[];
   addNewTask: (task: Omit<Task, '_id' | 'createdAt'>) => Promise<void>;
   removeTask: (taskId: string) => Promise<void>;
-  addNewCategory: (category: Omit<Category, 'id'>) => Promise<void>;
+  addNewCategory: (category: Omit<Category, 'id'> & { description?: string }) => Promise<void>;
   removeCategory: (categoryId: string) => Promise<void>;
   updateUserPreferences: (preferences: Partial<User['preferences']>) => void;
   isAuthenticated: boolean;
@@ -115,32 +115,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const addNewCategory = async (category: Omit<Category, 'id'>) => {
-    const token = localStorage.getItem('token');
-    const backendCategory = {
-      title: category.name,
-      colorCode: category.color,
-    };
-    const res = await fetch('/api/category/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(backendCategory),
-    });
-    if (res.ok) {
-      const created = await res.json();
-      // Save icon mapping in localStorage
-      const icons = JSON.parse(localStorage.getItem('categoryIcons') || '{}');
-      icons[created._id] = category.icon || '📁';
-      localStorage.setItem('categoryIcons', JSON.stringify(icons));
-      setCategories(prev => [
-        ...prev,
-        {
-          ...mapCategory(created),
-          icon: category.icon || '📁',
-        }
-      ]);
-    }
+  const addNewCategory = async (category: Omit<Category, 'id'> & { description?: string }) => {
+  const token = localStorage.getItem('token');
+  const backendCategory = {
+    title: category.name,
+    colorCode: category.color,
+    description: category.description || '',
   };
+  const res = await fetch('/api/category/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(backendCategory),
+  });
+  if (res.ok) {
+    const created = await res.json();
+    // Save icon mapping in localStorage
+    const icons = JSON.parse(localStorage.getItem('categoryIcons') || '{}');
+    icons[created._id] = category.icon || '📁';
+    localStorage.setItem('categoryIcons', JSON.stringify(icons));
+    setCategories(prev => [
+      ...prev,
+      {
+        id: created._id,
+        name: created.title,
+        icon: category.icon || '📁',
+        color: created.colorCode,
+      }
+    ]);
+  } else {
+    // Optionally handle error
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to create category');
+  }
+};
 
   const removeCategory = async (categoryId: string) => {
     const token = localStorage.getItem('token');

@@ -29,20 +29,21 @@ const AddCategoryForm: React.FC<AddCategoryFormProps> = ({ onCancel }) => {
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('Briefcase');
   const [color, setColor] = useState('#4F46E5');
+  const [description, setDescription] = useState('');
   const isDarkMode = user?.preferences?.darkMode??false;
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (name.trim()) {
-      addNewCategory({
-        name: name.trim(),
-        icon,
-        color,
-      });
-      onCancel();
-    }
-  };
+  e.preventDefault();
+  if (name.trim()) {
+    addNewCategory({
+      name: name.trim(),
+      icon,
+      color,
+      description: description.trim(), // add this line
+    });
+    onCancel();
+  }
+};
 
   return (
     <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl p-5 shadow-sm mb-6 animate-fadeIn`}>
@@ -65,6 +66,24 @@ const AddCategoryForm: React.FC<AddCategoryFormProps> = ({ onCancel }) => {
             }`}
             placeholder="e.g., Work, Personal, Health"
             required
+          />
+        </div>
+
+        <div className="mb-4">
+          <label htmlFor="description" className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            Description
+          </label>
+          <input
+            type="text"
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+              isDarkMode
+                ? 'bg-gray-900 border-gray-700 text-gray-100 placeholder-gray-400'
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+            }`}
+            placeholder="(optional)"
           />
         </div>
         

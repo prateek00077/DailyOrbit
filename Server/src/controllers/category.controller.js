@@ -9,6 +9,7 @@ import { Task } from "../models/task.model.js";
 
 //function for creating new category
 const createCategory = async (req, res) => {
+  
   try {
     const { title, description, colorCode, date } = req.body;
 
@@ -20,23 +21,23 @@ const createCategory = async (req, res) => {
     if (!user) {
       return res.status(401).json({ message: "Unauthorized: User not found" });
     }
-
-    // Check if category with same title exists for this user
-    const existingCategory = await Category.findOne({ title, userId: user._id });
+    
+    // Only block creation if BOTH title and userId match
+    const existingCategory = await Category.findOne({ title: title.trim(), userId: user._id });
     if (existingCategory) {
       return res.status(400).json({ message: "This category already exists" });
     }
-
+    
     const newCategory = new Category({
-      title,
+      title: title.trim(),
       description,
       colorCode,
       userId: user._id,
       date,
     });
-
+    
     const savedCategory = await newCategory.save();
-
+    
     return res.status(201).json({
       _id: savedCategory._id,
       title: savedCategory.title,
@@ -47,6 +48,7 @@ const createCategory = async (req, res) => {
       message: "Category created successfully",
     });
   } catch (err) {
+    console.log(err.message);
     return res.status(500).json({
       message: "Internal server error while creating category",
       error: err.message,

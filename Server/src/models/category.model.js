@@ -5,7 +5,6 @@ const categorySchema = new mongoose.Schema(
         title : {
             type: String,
             required: true,
-            unique: true,
         },
         description : {
             type: String,
@@ -26,5 +25,7 @@ const categorySchema = new mongoose.Schema(
     },
     { timestamps: true , toJSON: { virtuals: true }, toObject: { virtuals: true }}
 );
+
+categorySchema.index({ title: 1, userId: 1 }, { unique: true });
 
 export const Category = mongoose.model("Category", categorySchema);
