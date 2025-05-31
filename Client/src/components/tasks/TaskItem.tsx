@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, CheckCircle, Circle } from 'lucide-react';
+import { Trash2, CheckCircle, Circle} from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Task } from '../../types';
 
@@ -8,8 +8,9 @@ interface TaskItemProps {
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
-  const { removeTask, user } = useApp();
+  const { removeTask, updateTaskStatus, user } = useApp();
   const [isHovered, setIsHovered] = useState(false);
+  const [taskStatus,setTaskStatus] = useState(task.status);
   const isDarkMode = user?.preferences?.darkMode??false;
   
   const formattedDate = new Date(task.createdAt).toLocaleDateString('en-US', {
@@ -20,6 +21,18 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
   const handleDelete = () => {
     removeTask(task._id);
   };
+
+  const handleTaskStatus =()=>{
+    let newStatus = "";
+    if(task.status === "pending"){
+      newStatus = "completed";
+    }else{
+      newStatus = "pending";
+    }
+
+    setTaskStatus(newStatus);
+    updateTaskStatus(task._id,newStatus);
+  }
 
   return (
     <div 
@@ -33,10 +46,10 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
     >
       <div className="flex items-start">
         <div className="flex-shrink-0 pt-0.5">
-          {(task.status === 'completed') ? (
-            <CheckCircle size={20} className="text-green-500" />
+          {(taskStatus === 'completed') ? (
+            <CheckCircle onClick={handleTaskStatus} cursor="pointer" size={20} className="text-green-500" />
           ) : (
-            <Circle size={20} className={isDarkMode ? 'text-gray-500' : 'text-gray-300'} />
+            <Circle onClick={handleTaskStatus} cursor="pointer" size={20} className={isDarkMode ? 'text-gray-500' : 'text-gray-300'} />
           )}
         </div>
         <div className="ml-3 flex-1 min-w-0">

@@ -9,6 +9,7 @@ interface AppContextType {
   deleteUser: () => Promise<void>;
   addNewTask: (task: Omit<Task, '_id' | 'createdAt'>) => Promise<void>;
   removeTask: (taskId: string) => Promise<void>;
+  updateTaskStatus: (taskId: string, taskStatus: string) => Promise<void>;
   addNewCategory: (category: Omit<Category, 'id'> & { description?: string }) => Promise<void>;
   removeCategory: (categoryId: string) => Promise<void>;
   updateUserPreferences: (preferences: Partial<User['preferences']>) => void;
@@ -120,6 +121,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const updateTaskStatus = async (taskId: string, taskStatus: string) => {
+    const token = localStorage.getItem('token');
+    // Find the task to update
+    const taskToUpdate = tasks.find(task => task._id === taskId);
+    if (!taskToUpdate) throw new Error('Task not found');
+    // Update the status
+    const updatedTask = { ...taskToUpdate, status: taskStatus };
+    const res = await fetch(`/api/task/update/${taskId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(updatedTask),
+    });
+    if (res.ok) {
+      setTasks(prev =>
+      prev.map(task =>
+        task._id === taskId ? { ...task, status: taskStatus } : task
+      )
+      );
+    }
+  };
   
   const addNewCategory = async (category: Omit<Category, 'id'> & { description?: string }) => {
   const token = localStorage.getItem('token');
@@ -249,6 +270,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         tasks,
         addNewTask,
         removeTask,
+        updateTaskStatus,
         addNewCategory,
         removeCategory,
         updateUserPreferences,

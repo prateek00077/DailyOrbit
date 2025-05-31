@@ -57,8 +57,6 @@ const updateTask = async (req, res) => {
   try {
     const { id } = req.params;
     //debugging
-    console.log('Task ID:', req.params.id);
-    console.log('User ID:',req.user._id);
     const task = await Task.findOne({ _id: id, userId: req.user._id });
     //console.log('Fetched task:', task);
     
