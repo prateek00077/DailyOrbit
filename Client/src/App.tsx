@@ -8,10 +8,6 @@ import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
-// Dummy user for login (use these credentials):
-// Email: user@example.com
-// Password: password123
-
 function ProtectedRoute() {
   const { isAuthenticated } = useApp();
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;

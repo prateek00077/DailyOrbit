@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, CheckCircle, Circle} from 'lucide-react';
+import { Trash2, CheckCircle, Circle, Loader2} from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Task } from '../../types';
 
@@ -25,6 +25,8 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
   const handleTaskStatus =()=>{
     let newStatus = "";
     if(task.status === "pending"){
+      newStatus = "in-progress";
+    }else if(task.status === "in-progress"){
       newStatus = "completed";
     }else{
       newStatus = "pending";
@@ -46,10 +48,12 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
     >
       <div className="flex items-start">
         <div className="flex-shrink-0 pt-0.5">
-          {(taskStatus === 'completed') ? (
+          {taskStatus === 'completed' ? (
             <CheckCircle onClick={handleTaskStatus} cursor="pointer" size={20} className="text-green-500" />
-          ) : (
+          ) : taskStatus === 'pending' ? (
             <Circle onClick={handleTaskStatus} cursor="pointer" size={20} className={isDarkMode ? 'text-gray-500' : 'text-gray-300'} />
+          ) : (
+            <Loader2 onClick={handleTaskStatus} cursor="pointer" size={20} className='text-blue-600'/>
           )}
         </div>
         <div className="ml-3 flex-1 min-w-0">
