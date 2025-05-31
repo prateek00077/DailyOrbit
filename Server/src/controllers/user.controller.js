@@ -1,3 +1,4 @@
+import { Category } from "../models/category.model.js";
 import {User} from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 
@@ -35,18 +36,30 @@ const registerUser = async(req,res)=>{
     });
 
     if(!newUser) throw new Error("Something went wrong while creating the new user");
+    await newUser.save();
 
-    await newUser.save().then((user)=>{
+    // Add default category for the new user
+    const defaultCategory = new Category({
+      title: "General",
+      description: "Default category",
+      colorCode: "#4F46E5", // or any default color
+      userId: newUser._id,
+      date: new Date(),
+    });
+
+    await defaultCategory.save();
+
+    try {
         return res.status(201).json({
-            _id: user._id,
-            username: user.username,
-            fullname: user.fullname,
-            email: user.email,
+            _id: newUser._id,
+            username: newUser.username,
+            fullname: newUser.fullname,
+            email: newUser.email,
             message: "User registered successfully",
         })
-    }).catch((error)=>{
+    } catch (error) {
         return res.status(500).json({message: error.message?error.message : "Internal server error"});
-    })
+    }
 }
 
 //function for user login

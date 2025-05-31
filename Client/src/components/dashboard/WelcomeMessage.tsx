@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 
 const WelcomeMessage: React.FC = () => {
   const { user } = useApp();
   const [greeting, setGreeting] = useState('');
+  const navigate = useNavigate();
   
   useEffect(() => {
     const getCurrentGreeting = () => {
@@ -15,6 +17,10 @@ const WelcomeMessage: React.FC = () => {
     
     setGreeting(getCurrentGreeting());
   }, []);
+
+  const handleButton = ()=>{
+    navigate('/tasks')
+  }
 
   return (
     <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-6 shadow-lg animate-fadeIn">
@@ -28,7 +34,7 @@ const WelcomeMessage: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center space-x-4">
-          <button className="bg-white text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+          <button onClick={handleButton} className="bg-white text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
             Add New Task
           </button>
         </div>
