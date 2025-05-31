@@ -5,6 +5,8 @@ interface AppContextType {
   user: User | null;
   categories: Category[];
   tasks: Task[];
+
+  deleteUser: () => Promise<void>;
   addNewTask: (task: Omit<Task, '_id' | 'createdAt'>) => Promise<void>;
   removeTask: (taskId: string) => Promise<void>;
   addNewCategory: (category: Omit<Category, 'id'> & { description?: string }) => Promise<void>;
@@ -47,9 +49,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Fetch user, categories, and tasks after login or on refresh if authenticated
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+
     if (isAuthenticated && token) {
       // Fetch user info from localStorage
-      const storedUser = localStorage.getItem('user');
       if (storedUser) setUser(JSON.parse(storedUser));
 
       // Fetch categories from backend and map to frontend type
@@ -73,6 +76,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setUser(null);
       setCategories([]);
       setTasks([]);
+      localStorage.removeItem('user');
+      localStorage.removeItem('categoryIcons');
     }
   }, [isAuthenticated]);
 
@@ -115,6 +120,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  
   const addNewCategory = async (category: Omit<Category, 'id'> & { description?: string }) => {
   const token = localStorage.getItem('token');
   const backendCategory = {
@@ -201,18 +207,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const logout = async () => {
-    const token = localStorage.getItem('token');
-    await fetch('/api/user/logout', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setIsAuthenticated(false);
+  const token = localStorage.getItem('token');
+  await fetch('/api/user/logout', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('categoryIcons');
+  setIsAuthenticated(false);
+  setUser(null);
+  setCategories([]);
+  setTasks([]);
+  };
+
+  const deleteUser = async () => {
+  const token = localStorage.getItem('token');
+  const res = await fetch('/api/user/delete', {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.ok) {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('categoryIcons');
+    setIsAuthenticated(false);
     setUser(null);
     setCategories([]);
     setTasks([]);
-    localStorage.removeItem('categoryIcons');
+  } else {
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to delete user');
+  }
   };
 
   return (
@@ -229,6 +255,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isAuthenticated,
         login,
         logout,
+        deleteUser,
       }}
     >
       {children}

@@ -1,4 +1,5 @@
 import { Category } from "../models/category.model.js";
+import { Task } from "../models/task.model.js";
 import {User} from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 
@@ -151,4 +152,31 @@ const logoutUser = async(req,res)=>{
     })
 }
 
-export {registerUser, loginUser, logoutUser};
+//function for deleting a user
+const deleteUser = async(req,res)=>{
+    const userId = req.user._id;
+    const {refreshToken} = req.cookies;
+
+    if(!userId) return res.status(401).json({message: "Invalid User"});
+
+    await Task.deleteMany({ userId });
+    await Category.deleteMany({ userId });
+    /*await Progress.deleteMany({ userId });*/
+    await User.findByIdAndDelete(userId);
+
+    await User.findOneAndUpdate({refreshToken}, {refreshToken: ""}).then(()=>{
+        return res.
+        clearCookie("accessToken", {
+            httpOnly: true,
+            secure: true
+        }).clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: true
+        }) //clearing the cookies
+        .status(200).json({message: "User deleted successfully"});
+    }).catch((error)=>{
+        return res.status(500).json({message: error.message?error.message : "Internal server error"});
+    })
+}
+
+export {registerUser, loginUser, logoutUser, deleteUser};

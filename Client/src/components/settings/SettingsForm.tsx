@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 
 const SettingsForm: React.FC = () => {
-  const { user, updateUserPreferences } = useApp();
+  const { user, deleteUser, updateUserPreferences } = useApp();
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   // Defensive: handle case where user or preferences may be undefined
   const preferences = user?.preferences ?? {
     darkMode: false,
@@ -16,6 +18,18 @@ const SettingsForm: React.FC = () => {
       [key]: !preferences[key]
     });
   };
+
+  const handleDelete = async () => {
+  setDeleting(true);
+  setDeleteError(null);
+  try {
+    await deleteUser();
+  } catch (err: any) {
+    setDeleteError(err.message || 'Failed to delete account');
+  } finally {
+    setDeleting(false);
+  }
+};
 
   return (
     <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-sm p-6 max-w-2xl mx-auto animate-fadeIn`}>
@@ -96,9 +110,14 @@ const SettingsForm: React.FC = () => {
           </div>
           
           <div className="mt-4">
-            <button className="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium transition-colors">
-              Delete Account
+            <button onClick={handleDelete} className="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium transition-colors"
+            disabled={deleting}
+            >
+              {deleting ? 'Deleting...' : 'Delete Account'}
             </button>
+            {deleteError && (
+            <div className="mt-2 text-red-500 text-sm">{deleteError}</div>
+            )}
           </div>
         </div>
       </div>

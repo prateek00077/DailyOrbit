@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Folder, CheckSquare, Settings, X } from 'lucide-react';
+import { LayoutDashboard, Folder, CheckSquare, Settings, X} from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 interface SidebarProps {
