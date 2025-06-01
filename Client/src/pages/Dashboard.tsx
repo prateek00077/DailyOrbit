@@ -1,7 +1,6 @@
 import React from 'react';
 import WelcomeMessage from '../components/dashboard/WelcomeMessage';
 import DashboardStats from '../components/dashboard/DashboardStats';
-import CategoryList from '../components/categories/CategoryList';
 import { useApp } from '../context/AppContext';
 
 const Dashboard: React.FC = () => {
@@ -19,24 +18,24 @@ const Dashboard: React.FC = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Your Categories</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+            <h2 className="text-xl font-bold dark:text-gray-50 text-gray-800 mb-4">Your Categories</h2>
             
             {categories.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {categories.slice(0, 4).map((category) => {
                   const categoryTasks = tasks.filter(task => task.categoryId === category.id);
-                  const completedTasks = categoryTasks.filter(task => task.completed).length;
+                  const completedTasks = categoryTasks.filter(task => task.status === "completed").length;
                   
                   return (
                     <div 
                       key={category.id}
-                      className="bg-gray-50 rounded-lg p-4 flex items-center hover:bg-gray-100 transition-colors"
+                      className="bg-gray-50 dark:bg-gray-500 rounded-lg p-4 flex items-center hover:bg-gray-100 transition-colors"
                       style={{ borderLeft: `3px solid ${category.color}` }}
                     >
                       <div className="flex-1">
-                        <p className="font-medium text-gray-800">{category.name}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-medium dark:text-gray-50 text-gray-800">{category.name}</p>
+                        <p className="text-sm dark:text-gray-50 text-gray-500">
                           {completedTasks} of {categoryTasks.length} completed
                         </p>
                       </div>
@@ -51,8 +50,8 @@ const Dashboard: React.FC = () => {
         </div>
         
         <div>
-          <div className="bg-white rounded-xl p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Recent Tasks</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+            <h2 className="text-xl font-bold dark:text-gray-50 text-gray-800 mb-4">Recent Tasks</h2>
             
             {recentTasks.length > 0 ? (
               <div className="space-y-3">
@@ -61,11 +60,11 @@ const Dashboard: React.FC = () => {
                   
                   return (
                     <div 
-                      key={task.id}
-                      className="bg-gray-50 rounded-lg p-3 flex items-start"
+                      key={task._id}
+                      className="bg-gray-50 dark:bg-gray-500 rounded-lg p-3 flex items-start"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium ${task.completed ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                        <p className={`text-sm font-medium ${task.status === "completed" ? 'text-gray-400 line-through dark:text-gray-50' : 'text-gray-700 dark:text-gray-200'}`}>
                           {task.title}
                         </p>
                         {category && (
@@ -74,7 +73,7 @@ const Dashboard: React.FC = () => {
                               className="inline-block w-2 h-2 rounded-full mr-1"
                               style={{ backgroundColor: category.color }}
                             ></span>
-                            <span className="text-gray-500">{category.name}</span>
+                            <span className="text-gray-500 dark:text-gray-50">{category.name}</span>
                           </p>
                         )}
                       </div>

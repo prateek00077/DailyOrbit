@@ -74,10 +74,10 @@ const loginUser = async(req,res)=>{
     //We will generate an access token and refresh token
     //We will send the access token and refresh token in response
 
-    const {username,email,password} = req.body;
+    const {email,password} = req.body;
 
     //validation
-    if(!(username?.trim()) && !(email?.trim())){
+    if(!(email?.trim())){
         return res.status(400).json("usrname or email is required");
     }
 
@@ -85,7 +85,7 @@ const loginUser = async(req,res)=>{
     if(!password?.trim()) throw new Error(400,"password is required to log in");
 
     //Now we will find the the user who's having the same email or username
-    const user = await User.findOne({$or : [{username},{email}]});
+    const user = await User.findOne({email});
 
     //checking if user is there or not
     if(!user) return res.status(400).json("User does not exist");

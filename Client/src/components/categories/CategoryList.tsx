@@ -12,7 +12,7 @@ const CategoryList: React.FC = () => {
   return (
     <div className="animate-fadeIn">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Categories</h2>
+        <h2 className="text-2xl font-bold dark:text-gray-200 text-gray-800">Categories</h2>
         <button
           onClick={() => setIsAddingCategory(true)}
           className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors"
