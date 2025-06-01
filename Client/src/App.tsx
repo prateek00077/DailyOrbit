@@ -7,6 +7,7 @@ import Tasks from './pages/Tasks';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Progress from './pages/Progress';
 
 function ProtectedRoute() {
   const { isAuthenticated } = useApp();
@@ -35,6 +36,7 @@ function App() {
               <Route path="categories" element={<Categories />} />
               <Route path="tasks" element={<Tasks />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="progress" element={<Progress/>}/>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Route>

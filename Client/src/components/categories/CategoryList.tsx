@@ -7,6 +7,7 @@ import AddCategoryForm from './AddCategoryForm';
 const CategoryList: React.FC = () => {
   const { categories } = useApp();
   const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
 
   return (
     <div className="animate-fadeIn">
@@ -28,9 +29,18 @@ const CategoryList: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categories.map((category) => (
-          <CategoryCard key={category.id} category={category} />
-        ))}
+        {categories.map((category) => {
+          return(
+          /**consoling */
+          <CategoryCard
+            key={category.id}
+            category={category}
+            isExpanded={expandedCategoryId === category.id}
+            onExpand={() =>
+              setExpandedCategoryId(expandedCategoryId === category.id ? null : category.id)
+            }
+          />
+        )})}
       </div>
 
       {categories.length === 0 && !isAddingCategory && (
