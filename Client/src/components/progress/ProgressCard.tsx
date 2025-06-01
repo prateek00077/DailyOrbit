@@ -18,7 +18,7 @@ const ProgressCard: React.FC<Props> = ({ category, tasks }) => {
   const IconComponent = (LucideIcons as any)[category.icon];
 
   return (
-    <div className="bg-white dark:bg-zinc-800 shadow-sm rounded-xl p-5 flex flex-col gap-4">
+    <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-5 flex flex-col gap-4">
       <div className="flex items-center gap-3">
         {IconComponent ? (
           <IconComponent size={28} color={category.color} />
