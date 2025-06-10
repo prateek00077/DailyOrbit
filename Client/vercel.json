@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://dailyorbit.onrender.com/api/:path*"
+    }
+  ]
+}
