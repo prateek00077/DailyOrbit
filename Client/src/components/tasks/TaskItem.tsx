@@ -5,9 +5,11 @@ import { Task } from '../../types';
 
 interface TaskItemProps {
   task: Task;
+  hideShareDelete?: boolean; // <-- add this prop
+  onStatusChange?: (taskId: string, status: string) => Promise<void>;
 }
 
-const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
+const TaskItem: React.FC<TaskItemProps> = ({ task, hideShareDelete = false, onStatusChange }) => {
   const { removeTask, updateTaskStatus, user, updateTask } = useApp();
   const [isHovered, setIsHovered] = useState(false);
   const [taskStatus, setTaskStatus] = useState(task.status);
@@ -29,18 +31,18 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
     removeTask(task._id);
   };
 
-  const handleTaskStatus = () => {
-    let newStatus = "";
-    if (task.status === "pending") {
-      newStatus = "in-progress";
-    } else if (task.status === "in-progress") {
-      newStatus = "completed";
-    } else {
-      newStatus = "pending";
-    }
+  const handleTaskStatus = async () => {
+    let newStatus = '';
+    if (taskStatus === 'pending') newStatus = 'in-progress';
+    else if (taskStatus === 'in-progress') newStatus = 'completed';
+    else newStatus = 'pending';
 
     setTaskStatus(newStatus);
-    updateTaskStatus(task._id, newStatus);
+    if (onStatusChange) {
+      await onStatusChange(task._id, newStatus);
+    } else {
+      updateTaskStatus(task._id, newStatus);
+    }
   };
 
   const handleShare = () => {
@@ -164,45 +166,49 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
           )}
         </div>
         <div className={`flex-shrink-0 flex items-center gap-1 mt-2 sm:mt-0 sm:ml-2 transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-100 sm:opacity-0'}`}>
-          <button
-            onClick={handleShare}
-            className={`p-1 ${
-              isDarkMode
-                ? 'text-gray-400 hover:text-indigo-400 hover:bg-indigo-400/20'
-                : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50'
-            } rounded-lg transition-colors`}
-            title="Share task"
-          >
-            <Share2 size={16} />
-          </button>
-          <button
-            onClick={handleEdit}
-            className={`p-1 ${
-              isDarkMode
-                ? 'text-gray-400 hover:text-yellow-400 hover:bg-yellow-400/20'
-                : 'text-gray-400 hover:text-yellow-600 hover:bg-yellow-50'
-            } rounded-lg transition-colors`}
-            title="Edit task"
-            disabled={isEditing}
-          >
-            <Pencil size={16} />
-          </button>
-          <button
-            onClick={handleDelete}
-            className={`p-1 ${
-              isDarkMode
-                ? 'text-gray-400 hover:text-red-400 hover:bg-red-400/20'
-                : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
-            } rounded-lg transition-colors`}
-            title="Delete task"
-          >
-            <Trash2 size={16} />
-          </button>
+          {!hideShareDelete && (
+            <>
+              <button
+                onClick={handleShare}
+                className={`p-1 ${
+                  isDarkMode
+                    ? 'text-gray-400 hover:text-indigo-400 hover:bg-indigo-400/20'
+                    : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50'
+                } rounded-lg transition-colors`}
+                title="Share task"
+              >
+                <Share2 size={16} />
+              </button>
+              <button
+                onClick={handleEdit}
+                className={`p-1 ${
+                  isDarkMode
+                    ? 'text-gray-400 hover:text-yellow-400 hover:bg-yellow-400/20'
+                    : 'text-gray-400 hover:text-yellow-600 hover:bg-yellow-50'
+                } rounded-lg transition-colors`}
+                title="Edit task"
+                disabled={isEditing}
+              >
+                <Pencil size={16} />
+              </button>
+              <button
+                onClick={handleDelete}
+                className={`p-1 ${
+                  isDarkMode
+                    ? 'text-gray-400 hover:text-red-400 hover:bg-red-400/20'
+                    : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+                } rounded-lg transition-colors`}
+                title="Delete task"
+              >
+                <Trash2 size={16} />
+              </button>
+            </>
+          )}
         </div>
       </div>
 
       {/* Share Popup */}
-      {showSharePopup && (
+      {!hideShareDelete && showSharePopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 w-full max-w-xs relative`}>
             <button

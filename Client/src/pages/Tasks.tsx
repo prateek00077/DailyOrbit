@@ -18,7 +18,7 @@ const Tasks: React.FC = () => {
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">All Tasks</h1>
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-500 mb-4 sm:mb-0">All Tasks</h1>
         
         <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
           <div className="relative">

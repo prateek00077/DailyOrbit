@@ -190,6 +190,50 @@ const shareTask = async (req, res) => {
   }
 };
 
+//function for getting the shared tasks by userId
+const getTasksSharedToMe = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const tasks = await Task.find({ "sharedWith.user": userId })
+      .populate("userId", "name email")
+      .populate("categoryId", "title")
+      .populate("sharedWith.user", "name email");
+
+    res.status(200).json({tasks});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+//function to update the shared tasks status
+const updateTaskStatus = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { taskId } = req.params;
+    const { status } = req.body;
+
+    // Find the task and check if the user is the owner or in sharedWith
+    const task = await Task.findById(taskId);
+    if (
+      !task ||
+      (
+        String(task.userId) !== String(userId) &&
+        !task.sharedWith.some(sw => String(sw.user) === String(userId))
+      )
+    ) {
+      return res.status(403).json({ message: 'Not authorized to update this task' });
+    }
+
+    task.status = status;
+    await task.save();
+    res.json(task);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to update task status' });
+  }
+};
+
 export {
   createTask,
   updateTask,
@@ -197,5 +241,7 @@ export {
   getAllTasks,
   getTaskByDate,
   getTaskByCategory,
-  shareTask
+  shareTask,
+  getTasksSharedToMe,
+  updateTaskStatus
 }

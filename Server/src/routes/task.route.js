@@ -1,6 +1,6 @@
 import { Router } from "express";
 import verifyToken from "../middlewares/auth.middleware.js";
-import { createTask, deleteTask, getAllTasks, getTaskByCategory, getTaskByDate, shareTask, updateTask } from "../controllers/task.controller.js";
+import { createTask, deleteTask, getAllTasks, getTaskByCategory, getTaskByDate, getTasksSharedToMe, shareTask, updateTask, updateTaskStatus } from "../controllers/task.controller.js";
 
 const taskRouter = Router();
 taskRouter.use(verifyToken);
@@ -11,5 +11,7 @@ taskRouter.route('/get').get(getAllTasks);
 taskRouter.route('/date/:date').get(getTaskByDate);
 taskRouter.route('/category/:categoryId').get(getTaskByCategory);
 taskRouter.route('/share/:taskId').post(shareTask);
+taskRouter.route('/shared').get(getTasksSharedToMe);
+taskRouter.route('/update-status/:taskId').put(updateTaskStatus);
 
 export default taskRouter;

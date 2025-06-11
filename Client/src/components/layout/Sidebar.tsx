@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Folder, CheckSquare, Settings, X} from 'lucide-react';
+import { LayoutDashboard, Folder, CheckSquare, Settings, X, Share2 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { GiProgression } from "react-icons/gi";
 
@@ -22,7 +22,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, closeSidebar }) => {
     { path: '/', icon: <LayoutDashboard size={20} />, text: 'Dashboard' },
     { path: '/categories', icon: <Folder size={20} />, text: 'Categories' },
     { path: '/tasks', icon: <CheckSquare size={20} />, text: 'Tasks' },
-    { path: '/progress', icon: <GiProgression size={20} />,text: 'Progress'},
+    { path: '/shared-tasks', icon: <Share2 size={20} />, text: 'Shared Tasks' },
+    { path: '/progress', icon: <GiProgression size={20} />, text: 'Progress' },
     { path: '/settings', icon: <Settings size={20} />, text: 'Settings' },
   ];
 

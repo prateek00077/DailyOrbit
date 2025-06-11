@@ -28,6 +28,34 @@ const ProgressCard: React.FC<Props> = ({ category, tasks }) => {
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{category.name}</h3>
       </div>
 
+      {/* Lines map for each task */}
+      <div className="flex flex-col gap-1">
+        {tasks.map((task, idx) => (
+          <div key={task._id || idx} className="flex items-center gap-2">
+            <span
+              className={`inline-block w-3 h-3 rounded-full border-2 ${
+                task.status === 'completed'
+                  ? 'bg-green-500 border-green-500'
+                  : task.status === 'in-progress'
+                  ? 'bg-yellow-400 border-yellow-400'
+                  : 'bg-gray-300 border-gray-300'
+              }`}
+            ></span>
+            <span
+              className={`flex-1 h-2 rounded transition-all ${
+                task.status === 'completed'
+                  ? 'bg-green-400'
+                  : task.status === 'in-progress'
+                  ? 'bg-yellow-200'
+                  : 'bg-gray-200 dark:bg-gray-700'
+              }`}
+              style={{ minWidth: 0 }}
+            ></span>
+            <span className="text-xs truncate text-gray-600 dark:text-gray-300">{task.title}</span>
+          </div>
+        ))}
+      </div>
+
       <ProgressBar value={percentage} />
 
       <p className="text-sm text-gray-600 dark:text-gray-300">

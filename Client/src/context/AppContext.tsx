@@ -10,6 +10,7 @@ interface AppContextType {
   addNewTask: (task: Omit<Task, '_id' | 'createdAt'>) => Promise<void>;
   removeTask: (taskId: string) => Promise<void>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
+  getSharedTasks: ()=> Promise<Task[]>;
   updateTaskStatus: (taskId: string, taskStatus: string) => Promise<void>;
   addNewCategory: (category: Omit<Category, 'id'> & { description?: string }) => Promise<void>;
   removeCategory: (categoryId: string) => Promise<void>;
@@ -17,6 +18,7 @@ interface AppContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  updateSharedTaskStatus: (taskId: string, status: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -212,6 +214,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  //function for getting shared tasks
+  const getSharedTasks = async (): Promise<Task[]> => {
+    const token = localStorage.getItem('token');
+    const res = await fetch('/api/task/shared', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.tasks || []).map(mapTask);
+};
   // Preferences are frontend only
   const updateUserPreferences = (preferences: Partial<User['preferences']>) => {
     setUser(prevUser =>
@@ -282,6 +294,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }
   };
 
+  const updateSharedTaskStatus = async (taskId: string, status: string) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`/api/task/update-status/${taskId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) throw new Error('Failed to update shared task status');
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -291,6 +313,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addNewTask,
         removeTask,
         updateTask,
+        getSharedTasks,
         updateTaskStatus,
         addNewCategory,
         removeCategory,
@@ -299,6 +322,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         login,
         logout,
         deleteUser,
+        updateSharedTaskStatus,
       }}
     >
       {children}

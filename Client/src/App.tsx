@@ -8,6 +8,7 @@ import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Progress from './pages/Progress';
+import SharedTasks from './pages/SharedTasks';
 
 function ProtectedRoute() {
   const { isAuthenticated } = useApp();
@@ -38,6 +39,7 @@ function App() {
               <Route path="settings" element={<Settings />} />
               <Route path="progress" element={<Progress/>}/>
               <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="/shared-tasks" element={<SharedTasks />} />
             </Route>
           </Route>
         </Routes>
