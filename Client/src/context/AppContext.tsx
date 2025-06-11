@@ -9,6 +9,7 @@ interface AppContextType {
   deleteUser: () => Promise<void>;
   addNewTask: (task: Omit<Task, '_id' | 'createdAt'>) => Promise<void>;
   removeTask: (taskId: string) => Promise<void>;
+  updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   updateTaskStatus: (taskId: string, taskStatus: string) => Promise<void>;
   addNewCategory: (category: Omit<Category, 'id'> & { description?: string }) => Promise<void>;
   removeCategory: (categoryId: string) => Promise<void>;
@@ -119,6 +120,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (res.ok) {
       setTasks(prev => prev.filter(task => task._id !== taskId));
     }
+  };
+
+  // function for updating the task
+  const updateTask = async (taskId: string, updates: Partial<Task>) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`/api/task/update/${taskId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) {
+      throw new Error('Failed to update task');
+    }
+    const updatedTask = await res.json();
+    setTasks(prev =>
+      prev.map(task =>
+        task._id === taskId ? { ...task, ...updates, ...updatedTask } : task
+      )
+    );
   };
 
   const updateTaskStatus = async (taskId: string, taskStatus: string) => {
@@ -270,6 +290,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         tasks,
         addNewTask,
         removeTask,
+        updateTask,
         updateTaskStatus,
         addNewCategory,
         removeCategory,
