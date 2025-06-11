@@ -9,6 +9,7 @@ I have to write following controllers for the task
 
 import { Category } from "../models/category.model.js";
 import { Task } from "../models/task.model.js";
+import { User } from "../models/user.model.js";
 
 // function for creating a task
 const createTask = async (req, res) => {
@@ -146,5 +147,55 @@ const getTaskByCategory = async (req, res) => {
   }
 };
 
+//function for sharing tasks
+const shareTask = async (req, res) => {
+  const { email } = req.body;
+  const { taskId } = req.params; // Assuming you're passing taskId in the route
+  const requesterId = req.user._id; // Assuming you're using auth middleware
 
-export {createTask, updateTask,deleteTask, getAllTasks, getTaskByDate,getTaskByCategory}
+  try {
+    // 1. Check if user exists
+    const shareWith = await User.findOne({ email });
+    if (!shareWith) {
+      return res.status(404).json({ message: "The user does not exist" });
+    }
+
+    // 2. Find the task to share
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // 3. Check if the requester is the task owner
+    if (!task.userId.equals(requesterId)) {
+      return res.status(403).json({ message: "You are not authorized to share this task" });
+    }
+
+    // 4. Check if already shared
+    const alreadyShared = task.sharedWith.some(entry =>
+      entry.user.toString() === shareWith._id.toString()
+    );
+    if (alreadyShared) {
+      return res.status(409).json({ message: "Task already shared with this user" });
+    }
+
+    // 5. Share the task
+    task.sharedWith.push({ user: shareWith._id }); // you can also add `canEdit: true/false`
+    await task.save();
+
+    return res.status(200).json({ message: "Task shared successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export {
+  createTask,
+  updateTask,
+  deleteTask,
+  getAllTasks,
+  getTaskByDate,
+  getTaskByCategory,
+  shareTask
+}

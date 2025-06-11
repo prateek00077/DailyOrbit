@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, CheckCircle, Circle, Loader2, Share2, Pencil } from 'lucide-react';
+import { Trash2, CheckCircle, Circle, Loader2, Share2, Pencil, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Task } from '../../types';
 
@@ -13,6 +13,11 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
   const [taskStatus, setTaskStatus] = useState(task.status);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
+  const [showSharePopup, setShowSharePopup] = useState(false);
+  const [shareEmail, setShareEmail] = useState('');
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareError, setShareError] = useState('');
+  const [shareSuccess, setShareSuccess] = useState('');
   const isDarkMode = user?.preferences?.darkMode ?? false;
 
   const formattedDate = new Date(task.createdAt).toLocaleDateString('en-US', {
@@ -39,16 +44,37 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
   };
 
   const handleShare = () => {
-    const url = `${window.location.origin}/task/${task._id}`;
-    if (navigator.share) {
-      navigator.share({
-        title: task.title || 'Task',
-        url,
+    setShowSharePopup(true);
+    setShareEmail('');
+    setShareError('');
+    setShareSuccess('');
+  };
+
+  const handleShareSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setShareLoading(true);
+    setShareError('');
+    setShareSuccess('');
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/task/share/${task._id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email: shareEmail }),
       });
-    } else {
-      navigator.clipboard.writeText(url);
-      alert('Task link copied to clipboard!');
+      const data = await res.json();
+      if (!res.ok) {
+        setShareError(data.message || 'Failed to share task');
+      } else {
+        setShareSuccess('Task shared successfully!');
+      }
+    } catch {
+      setShareError('Failed to share task');
     }
+    setShareLoading(false);
   };
 
   const handleEdit = () => {
@@ -77,7 +103,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex items-start">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center">
         <div className="flex-shrink-0 pt-0.5">
           {taskStatus === 'completed' ? (
             <CheckCircle onClick={handleTaskStatus} cursor="pointer" size={20} className="text-green-500" />
@@ -87,14 +113,14 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
             <Loader2 onClick={handleTaskStatus} cursor="pointer" size={20} className='text-blue-600' />
           )}
         </div>
-        <div className="ml-3 flex-1 min-w-0">
+        <div className="ml-0 sm:ml-3 flex-1 min-w-0 w-full">
           {isEditing ? (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
               <input
                 type="text"
                 value={editTitle}
                 onChange={e => setEditTitle(e.target.value)}
-                className={`text-sm font-medium rounded px-2 py-1 border ${
+                className={`text-sm font-medium rounded px-2 py-1 border flex-1 min-w-0 ${
                   isDarkMode
                     ? 'bg-gray-800 border-gray-600 text-gray-100'
                     : 'bg-white border-gray-300 text-gray-800'
@@ -105,24 +131,26 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
                   if (e.key === 'Escape') handleEditCancel();
                 }}
               />
-              <button
-                onClick={handleEditSave}
-                className="text-green-600 hover:text-green-800 px-1"
-                title="Save"
-              >
-                Save
-              </button>
-              <button
-                onClick={handleEditCancel}
-                className="text-gray-400 hover:text-red-500 px-1"
-                title="Cancel"
-              >
-                Cancel
-              </button>
+              <div className="flex gap-2 mt-2 sm:mt-0">
+                <button
+                  onClick={handleEditSave}
+                  className="text-green-600 hover:text-green-800 px-2 py-1 rounded transition-colors bg-green-50 dark:bg-green-900"
+                  title="Save"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={handleEditCancel}
+                  className="text-gray-400 hover:text-red-500 px-2 py-1 rounded transition-colors bg-red-50 dark:bg-red-900"
+                  title="Cancel"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           ) : (
             <>
-              <p className={`text-sm font-medium ${
+              <p className={`text-sm font-medium break-words ${
                 (task.status === 'completed')
                   ? isDarkMode ? 'text-gray-500 line-through' : 'text-gray-400 line-through'
                   : isDarkMode ? 'text-gray-200' : 'text-gray-700'
@@ -135,7 +163,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
             </>
           )}
         </div>
-        <div className={`flex-shrink-0 flex items-center gap-1 transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`flex-shrink-0 flex items-center gap-1 mt-2 sm:mt-0 sm:ml-2 transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-100 sm:opacity-0'}`}>
           <button
             onClick={handleShare}
             className={`p-1 ${
@@ -172,6 +200,46 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
           </button>
         </div>
       </div>
+
+      {/* Share Popup */}
+      {showSharePopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 w-full max-w-xs relative`}>
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+              onClick={() => setShowSharePopup(false)}
+              title="Close"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-100">Share Task</h3>
+            <form onSubmit={handleShareSubmit}>
+              <input
+                type="email"
+                className={`w-full px-3 py-2 border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  isDarkMode
+                    ? 'bg-gray-900 border-gray-700 text-gray-100 placeholder-gray-400'
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                }`}
+                placeholder="Enter user's email"
+                value={shareEmail}
+                onChange={e => setShareEmail(e.target.value)}
+                required
+                disabled={shareLoading}
+              />
+              {shareError && <div className="text-red-500 text-sm mb-2">{shareError}</div>}
+              {shareSuccess && <div className="text-green-600 text-sm mb-2">{shareSuccess}</div>}
+              <button
+                type="submit"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition-colors"
+                disabled={shareLoading}
+              >
+                {shareLoading ? 'Sharing...' : 'Share'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
