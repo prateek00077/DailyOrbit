@@ -7,22 +7,25 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState(user?.email || '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false); // <-- loading state
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!email || !password) {
-    setError('Please enter both email and password.');
-    return;
-  }
-  const success = await login(email, password);
-  if (success) {
-    setError('');
-    navigate('/');
-  } else {
-    setError('Invalid email or password.');
-  }
-};
+    e.preventDefault();
+    if (!email || !password) {
+      setError('Please enter both email and password.');
+      return;
+    }
+    setLoading(true); // start loading
+    const success = await login(email, password);
+    setLoading(false); // stop loading
+    if (success) {
+      setError('');
+      navigate('/');
+    } else {
+      setError('Invalid email or password.');
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -38,6 +41,7 @@ const Login: React.FC = () => {
               onChange={e => setEmail(e.target.value)}
               autoFocus
               required
+              disabled={loading}
             />
           </div>
           <div className="mb-6">
@@ -48,14 +52,16 @@ const Login: React.FC = () => {
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
           {error && <div className="mb-4 text-red-500 text-sm">{error}</div>}
           <button
             type="submit"
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition-colors"
+            disabled={loading}
           >
-            Login
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
         <div className="mt-4 text-center">
@@ -65,6 +71,7 @@ const Login: React.FC = () => {
               className="text-indigo-600 hover:underline dark:text-indigo-400"
               onClick={() => navigate('/register')}
               type="button"
+              disabled={loading}
             >
               Register
             </button>
