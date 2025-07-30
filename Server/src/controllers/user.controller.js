@@ -1,8 +1,8 @@
+import sendEmail from "../config/mailservice.js";
 import { Category } from "../models/category.model.js";
 import { Task } from "../models/task.model.js";
 import {User} from "../models/user.model.js";
 import bcrypt from "bcryptjs";
-
 
 //function for user registration
 const registerUser = async(req,res)=>{
@@ -37,8 +37,18 @@ const registerUser = async(req,res)=>{
     });
 
     if(!newUser) throw new Error("Something went wrong while creating the new user");
+
     await newUser.save();
 
+    //generating otp to verify the user
+
+    const otp = Math.floor(Math.random()*10000).toString().padStart(4, '0');
+
+    // storing otp in user model database
+    newUser.otp = otp;
+    await newUser.save();
+    // send email to user with the otp
+    sendEmail(email, "Verify your email", `Your OTP is ${otp}`);
     // Add default category for the new user
     const defaultCategory = new Category({
       title: "General",
@@ -60,6 +70,39 @@ const registerUser = async(req,res)=>{
         })
     } catch (error) {
         return res.status(500).json({message: error.message?error.message : "Internal server error"});
+    }
+}
+
+//function for verifying user email through OTP
+const verifyUserEmail = async ( req, res ) => {
+    const { email, otp } = req.body;
+
+    if( !email || !otp ) {
+        return res.status(400).json({ message: "Email and OTP are required" });
+    }
+
+    try {
+        const user = await User.findOne({ email});
+
+        if(!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // check if the OTP matches
+
+        if(user.otp !== otp) {
+            return res.status(400).json({ message: "Invalid OTP" });
+        } else {
+            user.isVerified = true;
+            user.otp = null;
+            await user.save();
+            return res.status(200).json({ message: "Email verified successfully" });
+        }
+
+    } catch (error) {
+        console.error("Error verifying user email:", error);
+        return res.status(500).json({ message: "Internal server error" });
+        
     }
 }
 
@@ -90,6 +133,8 @@ const loginUser = async(req,res)=>{
     //checking if user is there or not
     if(!user) return res.status(400).json("User does not exist");
 
+    //checking if user is verified or not
+    if(!user.isVerified) return res.status(400).json("User is not verified. Please verify your email first.");
     //checking if password is valid or not
     const isPasswordValid = await user.isPasswordCorrect(password);
 
@@ -179,4 +224,4 @@ const deleteUser = async(req,res)=>{
     })
 }
 
-export {registerUser, loginUser, logoutUser, deleteUser};
+export {registerUser, loginUser, logoutUser, deleteUser, verifyUserEmail};
