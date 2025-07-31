@@ -48,7 +48,14 @@ const registerUser = async(req,res)=>{
     newUser.otp = otp;
     await newUser.save();
     // send email to user with the otp
-    sendEmail(email, "Verify your email", `Your OTP is ${otp}`);
+    try {
+      await sendEmail(email, "Verify your email", `Your OTP is ${otp}`);
+    } catch (emailError) {
+      console.error("Failed to send verification email:", emailError);
+      // Continue with user creation even if email fails
+      // You might want to handle this differently based on your requirements
+    }
+    
     // Add default category for the new user
     const defaultCategory = new Category({
       title: "General",
