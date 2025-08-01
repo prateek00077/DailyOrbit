@@ -16,27 +16,35 @@ const registerUser = async(req,res)=>{
         return res.status(400).json({message: "Password must be at least 6 characters"});
     }
 
-    await User.findOne({username}).then((userExists)=>{
-        if(userExists){
-            return res.status(400).json({message : "This username is already taken"});
-        }
-    });
+    const userExists = await User.findOne({$or:[{username}, {email}]});
 
-    await User.findOne({email}).then((userExists)=>{
-        if(userExists){
-            return res.status(400).json({message : "This email is already registered"});
-        }
-    });
+    if(userExists && userExists.isVerified){
+        return res.status(400).json({message : "This username or email is already taken"});
+    }
 
-    //creating new user
-    const newUser = new User({
-        username,
-        fullname,
-        email,
-        password: bcrypt.hashSync(password, 10),
-    });
+    let newUser;
+    
+    // If user exists but is not verified, update the existing user
+    if(userExists && !userExists.isVerified) {
+        // Update existing unverified user with new information
+        userExists.username = username;
+        userExists.fullname = fullname;
+        userExists.email = email;
+        userExists.password = bcrypt.hashSync(password, 10);
+        newUser = userExists;
+    } else if(!userExists) {
+        // Create new user if no user exists
+        newUser = new User({
+            username,
+            fullname,
+            email,
+            password: bcrypt.hashSync(password, 10),
+        });
+    }
 
-    if(!newUser) throw new Error("Something went wrong while creating the new user");
+    if(!newUser) {
+        return res.status(500).json({message: "Something went wrong while creating/updating the user"});
+    }
 
     await newUser.save();
 
@@ -52,8 +60,6 @@ const registerUser = async(req,res)=>{
       await sendEmail(email, "Verify your email", `Your OTP is ${otp}`);
     } catch (emailError) {
       console.error("Failed to send verification email:", emailError);
-      // Continue with user creation even if email fails
-      // You might want to handle this differently based on your requirements
     }
     
     // Add default category for the new user
@@ -68,12 +74,16 @@ const registerUser = async(req,res)=>{
     await defaultCategory.save();
 
     try {
+        const message = userExists && !userExists.isVerified 
+            ? "User information updated successfully. Please verify your email." 
+            : "User registered successfully";
+            
         return res.status(201).json({
             _id: newUser._id,
             username: newUser.username,
             fullname: newUser.fullname,
             email: newUser.email,
-            message: "User registered successfully",
+            message: message,
         })
     } catch (error) {
         return res.status(500).json({message: error.message?error.message : "Internal server error"});
@@ -231,4 +241,45 @@ const deleteUser = async(req,res)=>{
     })
 }
 
-export {registerUser, loginUser, logoutUser, deleteUser, verifyUserEmail};
+//function for resending OTP
+const resendOTP = async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+    }
+
+    try {
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({ message: "User is already verified" });
+        }
+
+        // Generate new OTP
+        const otp = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        
+        // Update user with new OTP
+        user.otp = otp;
+        await user.save();
+
+        // Send new OTP email
+        try {
+            await sendEmail(email, "Verify your email", `Your new OTP is ${otp}`);
+            return res.status(200).json({ message: "New OTP sent successfully" });
+        } catch (emailError) {
+            console.error("Failed to send OTP email:", emailError);
+            return res.status(500).json({ message: "Failed to send OTP email" });
+        }
+
+    } catch (error) {
+        console.error("Error resending OTP:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export {registerUser, loginUser, logoutUser, deleteUser, verifyUserEmail, resendOTP};
