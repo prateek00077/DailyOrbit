@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Progress from './pages/Progress';
 import SharedTasks from './pages/SharedTasks';
+import OtpForm from './pages/otpform';
 
 function ProtectedRoute() {
   const { isAuthenticated } = useApp();
@@ -29,6 +30,7 @@ function App() {
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/otp-form" element={<OtpForm/>}/>
           </Route>
           {/* Protected routes for authenticated users */}
           <Route element={<ProtectedRoute />}>

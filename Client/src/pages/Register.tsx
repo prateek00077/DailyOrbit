@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorMessage from '../components/ErrorMessage';
 
 const Register: React.FC = () => {
   const [name, setName] = useState('');
@@ -13,15 +15,25 @@ const Register: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    // Validation
     if (!name || !email || !password || !confirm) {
       setError('Please fill all fields.');
       return;
     }
+    
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    
     if (password !== confirm) {
       setError('Passwords do not match.');
       return;
     }
+
     setLoading(true);
+    
     try {
       const res = await fetch('/api/user/register', {
         method: 'POST',
@@ -30,26 +42,43 @@ const Register: React.FC = () => {
           fullname: name,
           email,
           password,
-          username: email.split('@')[0], // or ask for username separately
+          username: email.split('@')[0], // Generate username from email
         }),
       });
+      
       const data = await res.json();
+      
       if (!res.ok) {
         setError(data.message || 'Registration failed');
         setLoading(false);
         return;
       }
-      navigate('/login');
+
+      // Store email in localStorage for OTP form
+      localStorage.setItem('registrationEmail', email);
+      
+      // Navigate to OTP form with success message
+      navigate('/otp-form', { 
+        state: { 
+          message: data.message,
+          email: email 
+        } 
+      });
+      
     } catch (err) {
       setError('Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 text-center">Register for DailyOrbit</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-6">
+          Complete your registration by verifying your email address
+        </p>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Name</label>
@@ -91,13 +120,25 @@ const Register: React.FC = () => {
               required
             />
           </div>
-          {error && <div className="mb-4 text-red-500 text-sm">{error}</div>}
+          {error && (
+            <ErrorMessage 
+              message={error} 
+              onClose={() => setError('')}
+            />
+          )}
           <button
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition-colors"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             disabled={loading}
           >
-            {loading ? 'Registering...' : 'Register'}
+            {loading ? (
+              <>
+                <LoadingSpinner size="small" color="text-white" />
+                <span className="ml-2">Sending verification...</span>
+              </>
+            ) : (
+              'Start Registration'
+            )}
           </button>
         </form>
         <div className="mt-4 text-center">

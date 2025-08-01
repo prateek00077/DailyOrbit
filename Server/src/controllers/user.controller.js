@@ -2,91 +2,92 @@ import sendEmail from "../config/mailservice.js";
 import { Category } from "../models/category.model.js";
 import { Task } from "../models/task.model.js";
 import {User} from "../models/user.model.js";
+import { TempRegistration } from "../models/tempRegistration.model.js";
 import bcrypt from "bcryptjs";
 
 //function for user registration
 const registerUser = async(req,res)=>{
-    const {username, email, password, fullname} = req.body;
+    try {
+        console.log("Registration request received:", req.body);
+        const {username, email, password, fullname} = req.body;
 
-    if(!username || !email || !password){
-        return res.status(400).json({message: "Please fill required fields"});
-    }
+        if(!username || !email || !password){
+            return res.status(400).json({message: "Please fill required fields"});
+        }
 
-    if(password.length < 6){
-        return res.status(400).json({message: "Password must be at least 6 characters"});
-    }
+        if(password.length < 6){
+            return res.status(400).json({message: "Password must be at least 6 characters"});
+        }
 
-    const userExists = await User.findOne({$or:[{username}, {email}]});
-
-    if(userExists && userExists.isVerified){
-        return res.status(400).json({message : "This username or email is already taken"});
-    }
-
-    let newUser;
-    
-    // If user exists but is not verified, update the existing user
-    if(userExists && !userExists.isVerified) {
-        // Update existing unverified user with new information
-        userExists.username = username;
-        userExists.fullname = fullname;
-        userExists.email = email;
-        userExists.password = bcrypt.hashSync(password, 10);
-        newUser = userExists;
-    } else if(!userExists) {
-        // Create new user if no user exists
-        newUser = new User({
-            username,
-            fullname,
-            email,
-            password: bcrypt.hashSync(password, 10),
+        console.log("Checking if user exists...");
+        // Check if a user already exists (since we don't have isVerified anymore)
+        const userExists = await User.findOne({
+            $or: [{username}, {email}]
         });
-    }
 
-    if(!newUser) {
-        return res.status(500).json({message: "Something went wrong while creating/updating the user"});
-    }
+        if(userExists){
+            console.log("This username or email is already taken");
+            return res.status(400).json({message : "This username or email is already taken"});
+        }
 
-    await newUser.save();
+        console.log("Checking for pending registration...");
+        // Check if there's a pending registration for this email
+        const pendingRegistration = await TempRegistration.findOne({ email });
+        
+        // Generate OTP
+        const otp = Math.floor(Math.random()*10000).toString().padStart(4, '0');
+        console.log("Generated OTP:", otp);
+        
+        if(pendingRegistration) {
+            console.log("Updating existing pending registration...");
+            // Update existing pending registration
+            pendingRegistration.username = username;
+            pendingRegistration.fullname = fullname;
+            pendingRegistration.password = bcrypt.hashSync(password, 10);
+            pendingRegistration.otp = otp;
+            pendingRegistration.expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+            await pendingRegistration.save();
+        } else {
+            console.log("Creating new pending registration...");
+            // Create new pending registration
+            const newPendingRegistration = new TempRegistration({
+                username,
+                fullname,
+                email,
+                password: bcrypt.hashSync(password, 10),
+                otp: otp,
+                expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+            });
+            await newPendingRegistration.save();
+        }
 
-    //generating otp to verify the user
+        console.log("Sending email...");
+        // Send email to user with the OTP
+        try {
+            await sendEmail(email, "Verify your email", `Your OTP is ${otp}`);
+            console.log("Email sent successfully");
+        } catch (emailError) {
+            console.error("Failed to send verification email:", emailError);
+            // For development/testing, log the OTP to console
+            console.log("=== DEVELOPMENT MODE ===");
+            console.log(`OTP for ${email}: ${otp}`);
+            console.log("=== END DEVELOPMENT MODE ===");
+            console.log("Email failed but registration continues...");
+        }
 
-    const otp = Math.floor(Math.random()*10000).toString().padStart(4, '0');
-
-    // storing otp in user model database
-    newUser.otp = otp;
-    await newUser.save();
-    // send email to user with the otp
-    try {
-      await sendEmail(email, "Verify your email", `Your OTP is ${otp}`);
-    } catch (emailError) {
-      console.error("Failed to send verification email:", emailError);
-    }
-    
-    // Add default category for the new user
-    const defaultCategory = new Category({
-      title: "General",
-      description: "Default category",
-      colorCode: "#4F46E5", // or any default color
-      userId: newUser._id,
-      date: new Date(),
-    });
-
-    await defaultCategory.save();
-
-    try {
-        const message = userExists && !userExists.isVerified 
-            ? "User information updated successfully. Please verify your email." 
-            : "User registered successfully";
+        const message = pendingRegistration 
+            ? "Registration updated successfully. Please verify your email." 
+            : "Registration initiated. Please verify your email.";
             
-        return res.status(201).json({
-            _id: newUser._id,
-            username: newUser.username,
-            fullname: newUser.fullname,
-            email: newUser.email,
+        console.log("Registration successful, returning response...");
+        return res.status(200).json({
+            email: email,
             message: message,
+            requiresVerification: true
         })
     } catch (error) {
-        return res.status(500).json({message: error.message?error.message : "Internal server error"});
+        console.error("Registration error:", error);
+        return res.status(500).json({message: error.message || "Internal server error"});
     }
 }
 
@@ -99,27 +100,62 @@ const verifyUserEmail = async ( req, res ) => {
     }
 
     try {
-        const user = await User.findOne({ email});
+        // Find the pending registration by email
+        const pendingRegistration = await TempRegistration.findOne({ email });
 
-        if(!user) {
-            return res.status(404).json({ message: "User not found" });
+        if(!pendingRegistration) {
+            return res.status(404).json({ message: "No pending registration found. Please register first." });
         }
 
-        // check if the OTP matches
-
-        if(user.otp !== otp) {
+        // Check if the OTP matches
+        if(pendingRegistration.otp !== otp) {
             return res.status(400).json({ message: "Invalid OTP" });
-        } else {
-            user.isVerified = true;
-            user.otp = null;
-            await user.save();
-            return res.status(200).json({ message: "Email verified successfully" });
         }
+
+        // Check if registration has expired
+        if(pendingRegistration.expiresAt < new Date()) {
+            // Delete expired registration
+            await TempRegistration.findByIdAndDelete(pendingRegistration._id);
+            return res.status(400).json({ message: "Registration has expired. Please register again." });
+        }
+
+        // Create the actual user in the database
+        const newUser = new User({
+            username: pendingRegistration.username,
+            fullname: pendingRegistration.fullname,
+            email: pendingRegistration.email,
+            password: pendingRegistration.password
+        });
+
+        await newUser.save();
+
+        // Add default category for the new user
+        const defaultCategory = new Category({
+            title: "General",
+            description: "Default category",
+            colorCode: "#4F46E5",
+            userId: newUser._id,
+            date: new Date(),
+        });
+
+        await defaultCategory.save();
+
+        // Delete the temporary registration
+        await TempRegistration.findByIdAndDelete(pendingRegistration._id);
+
+        return res.status(200).json({ 
+            message: "Email verified successfully",
+            user: {
+                _id: newUser._id,
+                username: newUser.username,
+                fullname: newUser.fullname,
+                email: newUser.email
+            }
+        });
 
     } catch (error) {
         console.error("Error verifying user email:", error);
         return res.status(500).json({ message: "Internal server error" });
-        
     }
 }
 
@@ -150,8 +186,8 @@ const loginUser = async(req,res)=>{
     //checking if user is there or not
     if(!user) return res.status(400).json("User does not exist");
 
-    //checking if user is verified or not
-    if(!user.isVerified) return res.status(400).json("User is not verified. Please verify your email first.");
+    // Since we removed isVerified, all users in the database are verified
+    // No need to check verification status
     //checking if password is valid or not
     const isPasswordValid = await user.isPasswordCorrect(password);
 
@@ -241,4 +277,65 @@ const deleteUser = async(req,res)=>{
     })
 }
 
-export {registerUser, loginUser, logoutUser, deleteUser, verifyUserEmail};
+//function for resending OTP
+const resendOTP = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: "Email is required" });
+        }
+
+        // Check if there's a pending registration for this email
+        const pendingRegistration = await TempRegistration.findOne({ email });
+
+        if (!pendingRegistration) {
+            return res.status(404).json({ message: "No pending registration found for this email. Please register first." });
+        }
+
+        // Check if registration has expired
+        if(pendingRegistration.expiresAt < new Date()) {
+            // Delete expired registration
+            await TempRegistration.findByIdAndDelete(pendingRegistration._id);
+            return res.status(400).json({ message: "Registration has expired. Please register again." });
+        }
+
+        // Generate new OTP
+        const otp = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        
+        // Update pending registration with new OTP and extend expiry
+        pendingRegistration.otp = otp;
+        pendingRegistration.expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        await pendingRegistration.save();
+
+        // Send new OTP email
+        try {
+            await sendEmail(email, "Verify your email", `Your new OTP is ${otp}`);
+            return res.status(200).json({ message: "New OTP sent successfully" });
+        } catch (emailError) {
+            console.error("Failed to send OTP email:", emailError);
+            return res.status(500).json({ message: "Failed to send OTP email" });
+        }
+
+    } catch (error) {
+        console.error("Error resending OTP:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+//function for cleaning up expired temporary registrations
+const cleanupExpiredRegistrations = async () => {
+    try {
+        const result = await TempRegistration.deleteMany({
+            expiresAt: { $lt: new Date() }
+        });
+        console.log(`Cleaned up ${result.deletedCount} expired registrations`);
+    } catch (error) {
+        console.error("Error cleaning up expired registrations:", error);
+    }
+};
+
+// Run cleanup every 5 minutes
+setInterval(cleanupExpiredRegistrations, 5 * 60 * 1000);
+
+export {registerUser, loginUser, logoutUser, deleteUser, verifyUserEmail, resendOTP};

@@ -15,6 +15,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use(cookieParser());
+// Test endpoint
+app.get('/api/test', (req, res) => {
+    res.json({ message: 'Server is working!' });
+});
+
 app.use('/api/user', userRouter);
 app.use('/api/category', categoryRouter);
 app.use('/api/task',taskRouter);
