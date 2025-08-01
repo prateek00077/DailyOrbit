@@ -241,45 +241,4 @@ const deleteUser = async(req,res)=>{
     })
 }
 
-//function for resending OTP
-const resendOTP = async (req, res) => {
-    const { email } = req.body;
-
-    if (!email) {
-        return res.status(400).json({ message: "Email is required" });
-    }
-
-    try {
-        const user = await User.findOne({ email });
-
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        if (user.isVerified) {
-            return res.status(400).json({ message: "User is already verified" });
-        }
-
-        // Generate new OTP
-        const otp = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-        
-        // Update user with new OTP
-        user.otp = otp;
-        await user.save();
-
-        // Send new OTP email
-        try {
-            await sendEmail(email, "Verify your email", `Your new OTP is ${otp}`);
-            return res.status(200).json({ message: "New OTP sent successfully" });
-        } catch (emailError) {
-            console.error("Failed to send OTP email:", emailError);
-            return res.status(500).json({ message: "Failed to send OTP email" });
-        }
-
-    } catch (error) {
-        console.error("Error resending OTP:", error);
-        return res.status(500).json({ message: "Internal server error" });
-    }
-}
-
-export {registerUser, loginUser, logoutUser, deleteUser, verifyUserEmail, resendOTP};
+export {registerUser, loginUser, logoutUser, deleteUser, verifyUserEmail};
