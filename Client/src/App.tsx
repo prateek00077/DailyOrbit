@@ -9,7 +9,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Progress from './pages/Progress';
 import SharedTasks from './pages/SharedTasks';
-import OtpForm from './pages/otpform.tsx';
+import OtpForm from './pages/OtpForm';
 
 function ProtectedRoute() {
   const { isAuthenticated } = useApp();
