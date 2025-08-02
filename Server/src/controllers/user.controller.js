@@ -8,7 +8,6 @@ import bcrypt from "bcryptjs";
 //function for user registration
 const registerUser = async(req,res)=>{
     try {
-        console.log("Registration request received:", req.body);
         const {username, email, password, fullname} = req.body;
 
         if(!username || !email || !password){
@@ -19,8 +18,7 @@ const registerUser = async(req,res)=>{
             return res.status(400).json({message: "Password must be at least 6 characters"});
         }
 
-        console.log("Checking if user exists...");
-        // Check if a user already exists (since we don't have isVerified anymore)
+        // Check if a user already exists
         const userExists = await User.findOne({
             $or: [{username}, {email}]
         });
@@ -30,16 +28,13 @@ const registerUser = async(req,res)=>{
             return res.status(400).json({message : "This username or email is already taken"});
         }
 
-        console.log("Checking for pending registration...");
         // Check if there's a pending registration for this email
         const pendingRegistration = await TempRegistration.findOne({ email });
         
         // Generate OTP
         const otp = Math.floor(Math.random()*10000).toString().padStart(4, '0');
-        console.log("Generated OTP:", otp);
         
         if(pendingRegistration) {
-            console.log("Updating existing pending registration...");
             // Update existing pending registration
             pendingRegistration.username = username;
             pendingRegistration.fullname = fullname;
@@ -48,7 +43,6 @@ const registerUser = async(req,res)=>{
             pendingRegistration.expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
             await pendingRegistration.save();
         } else {
-            console.log("Creating new pending registration...");
             // Create new pending registration
             const newPendingRegistration = new TempRegistration({
                 username,
@@ -61,25 +55,17 @@ const registerUser = async(req,res)=>{
             await newPendingRegistration.save();
         }
 
-        console.log("Sending email...");
         // Send email to user with the OTP
         try {
             await sendEmail(email, "Verify your email", `Your OTP is ${otp}`);
-            console.log("Email sent successfully");
         } catch (emailError) {
             console.error("Failed to send verification email:", emailError);
-            // For development/testing, log the OTP to console
-            console.log("=== DEVELOPMENT MODE ===");
-            console.log(`OTP for ${email}: ${otp}`);
-            console.log("=== END DEVELOPMENT MODE ===");
-            console.log("Email failed but registration continues...");
         }
 
         const message = pendingRegistration 
             ? "Registration updated successfully. Please verify your email." 
             : "Registration initiated. Please verify your email.";
-            
-        console.log("Registration successful, returning response...");
+
         return res.status(200).json({
             email: email,
             message: message,
