@@ -1,12 +1,13 @@
 {
-  "rewrites": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/api/(.*)",
+      "dest": "https://dailyorbit.onrender.com/api/$1"
     },
     {
-      "source": "/api/:path*",
-      "destination": "https://dailyorbit.onrender.com/api/:path*"
+      "src": "/(.*)",
+      "dest": "/index.html",
+      "status": 200
     }
   ]
 }
