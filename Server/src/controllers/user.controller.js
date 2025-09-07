@@ -218,22 +218,24 @@ const loginUser = async(req,res)=>{
 const logoutUser = async(req,res)=>{
     const {refreshToken} = req.cookies;
 
-    if(!refreshToken) throw new Error("Refresh token is required");
-
-    //deleting refresh token from database
-    await User.findOneAndUpdate({refreshToken}, {refreshToken: ""}).then(()=>{
-        return res.
-        clearCookie("accessToken", {
-            httpOnly: true,
-            secure: true
-        }).clearCookie("refreshToken", {
-            httpOnly: true,
-            secure: true
-        }) //clearing the cookies
-        .status(200).json({message: "User logged out successfully"});
-    }).catch((error)=>{
+    try {
+        if (refreshToken) {
+            await User.findOneAndUpdate({refreshToken}, {refreshToken: ""});
+        }
+        return res
+            .clearCookie("accessToken", {
+                httpOnly: true,
+                secure: true
+            })
+            .clearCookie("refreshToken", {
+                httpOnly: true,
+                secure: true
+            })
+            .status(200)
+            .json({message: "User logged out successfully"});
+    } catch (error) {
         return res.status(500).json({message: error.message?error.message : "Internal server error"});
-    })
+    }
 }
 
 //function for deleting a user

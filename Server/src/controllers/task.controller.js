@@ -10,6 +10,7 @@ I have to write following controllers for the task
 import { Category } from "../models/category.model.js";
 import { Task } from "../models/task.model.js";
 import { User } from "../models/user.model.js";
+import { createTaskSharedNotification, createTaskUpdatedNotification, createTaskCompletedNotification } from "../services/notificationService.js";
 
 // function for creating a task
 const createTask = async (req, res) => {
@@ -183,6 +184,19 @@ const shareTask = async (req, res) => {
     task.sharedWith.push({ user: shareWith._id }); // you can also add `canEdit: true/false`
     await task.save();
 
+    // 6. Create notification for the recipient
+    try {
+      const sharerName = (req.user?.username) || (req.user?.fullname) || (req.user?.email) || 'Someone';
+      await createTaskSharedNotification(
+        shareWith._id,
+        sharerName,
+        task.title
+      );
+    } catch (notificationError) {
+      console.error('Failed to create notification:', notificationError);
+      // Don't fail the sharing if notification fails
+    }
+
     return res.status(200).json({ message: "Task shared successfully" });
   } catch (err) {
     console.error(err);
@@ -226,8 +240,46 @@ const updateTaskStatus = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to update this task' });
     }
 
+    const oldStatus = task.status;
     task.status = status;
     await task.save();
+
+    // Send notifications to shared users and owner
+    try {
+      const updater = await User.findById(userId);
+      const updaterName = updater?.username || updater?.fullname || 'Someone';
+
+      // Notify the task owner if they're not the one updating
+      if (String(task.userId) !== String(userId)) {
+        await createTaskUpdatedNotification(task.userId, updaterName, task.title);
+      }
+
+      // Notify other shared users
+      for (const sharedUser of task.sharedWith) {
+        if (String(sharedUser.user) !== String(userId) && String(sharedUser.user) !== String(task.userId)) {
+          await createTaskUpdatedNotification(sharedUser.user, updaterName, task.title);
+        }
+      }
+
+      // Special notification for task completion
+      if (status === 'completed' && oldStatus !== 'completed') {
+        // Notify the task owner if they're not the one completing
+        if (String(task.userId) !== String(userId)) {
+          await createTaskCompletedNotification(task.userId, updaterName, task.title);
+        }
+
+        // Notify other shared users
+        for (const sharedUser of task.sharedWith) {
+          if (String(sharedUser.user) !== String(userId) && String(sharedUser.user) !== String(task.userId)) {
+            await createTaskCompletedNotification(sharedUser.user, updaterName, task.title);
+          }
+        }
+      }
+    } catch (notificationError) {
+      console.error('Failed to create status update notifications:', notificationError);
+      // Don't fail the update if notification fails
+    }
+
     res.json(task);
   } catch (err) {
     res.status(500).json({ message: 'Failed to update task status' });

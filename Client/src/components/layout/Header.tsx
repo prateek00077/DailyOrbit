@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Bell, Settings, LogOut, CircleUserRound } from 'lucide-react';
+import { Menu, Settings, LogOut, CircleUserRound } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { MdOutlineMenuOpen } from "react-icons/md";
+import NotificationDropdown from '../notifications/NotificationDropdown';
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -59,15 +60,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <button
-              className={`p-2 rounded-full ${
-                isDarkMode
-                  ? 'text-gray-400 hover:bg-gray-700'
-                  : 'text-gray-500 hover:bg-gray-100'
-              } transition-colors`}
-            >
-              <Bell size={20} />
-            </button>
+            <NotificationDropdown />
 
             <button
               className={`p-2 rounded-full ${

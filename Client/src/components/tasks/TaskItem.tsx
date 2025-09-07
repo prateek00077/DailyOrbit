@@ -71,7 +71,11 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, hideShareDelete = false, onSt
       if (!res.ok) {
         setShareError(data.message || 'Failed to share task');
       } else {
-        setShareSuccess('Task shared successfully!');
+        setShareSuccess('Task shared successfully! Notification sent to the user.');
+        // Close the popup after 2 seconds
+        setTimeout(() => {
+          setShowSharePopup(false);
+        }, 2000);
       }
     } catch {
       setShareError('Failed to share task');

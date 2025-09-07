@@ -23,3 +23,16 @@ export interface User {
     compactView: boolean;
   }
 }
+
+export interface Notification {
+  _id: string;
+  userId: string;
+  type: 'task_shared' | 'task_updated' | 'task_completed' | 'general';
+  title: string;
+  message: string;
+  data: any;
+  isRead: boolean;
+  readAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}

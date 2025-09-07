@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
+import { NotificationProvider } from './context/NotificationContext';
 import MainLayout from './components/layout/MainLayout';
 import Dashboard from './pages/Dashboard';
 import Categories from './pages/Categories';
@@ -24,28 +25,30 @@ function PublicRoute() {
 function App() {
   return (
     <AppProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public routes for login/register */}
-          <Route element={<PublicRoute />}>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/otp-form" element={<OtpForm/>}/>
-          </Route>
-          {/* Protected routes for authenticated users */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="categories" element={<Categories />} />
-              <Route path="tasks" element={<Tasks />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="progress" element={<Progress/>}/>
-              <Route path="*" element={<Navigate to="/" replace />} />
-              <Route path="/shared-tasks" element={<SharedTasks />} />
+      <NotificationProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public routes for login/register */}
+            <Route element={<PublicRoute />}>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/otp-form" element={<OtpForm/>}/>
             </Route>
-          </Route>
-        </Routes>
-      </BrowserRouter>
+            {/* Protected routes for authenticated users */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<MainLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="categories" element={<Categories />} />
+                <Route path="tasks" element={<Tasks />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="progress" element={<Progress/>}/>
+                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="/shared-tasks" element={<SharedTasks />} />
+              </Route>
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </NotificationProvider>
     </AppProvider>
   );
 }
