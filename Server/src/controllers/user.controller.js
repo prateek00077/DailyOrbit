@@ -2,8 +2,8 @@ import sendEmail from "../config/mailservice.js";
 import { Category } from "../models/category.model.js";
 import { Task } from "../models/task.model.js";
 import {User} from "../models/user.model.js";
-import { TempRegistration } from "../models/tempRegistration.model.js";
 import bcrypt from "bcryptjs";
+import redisService from "../services/redisService.js";
 
 //function for user registration
 const registerUser = async(req,res)=>{
@@ -28,32 +28,23 @@ const registerUser = async(req,res)=>{
             return res.status(400).json({message : "This username or email is already taken"});
         }
 
-        // Check if there's a pending registration for this email
-        const pendingRegistration = await TempRegistration.findOne({ email });
+        // Check if there's a pending registration for this email in Redis
+        const existingOTPData = await redisService.getOTP(email);
         
         // Generate OTP
         const otp = Math.floor(Math.random()*10000).toString().padStart(4, '0');
         
-        if(pendingRegistration) {
-            // Update existing pending registration
-            pendingRegistration.username = username;
-            pendingRegistration.fullname = fullname;
-            pendingRegistration.password = bcrypt.hashSync(password, 10);
-            pendingRegistration.otp = otp;
-            pendingRegistration.expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-            await pendingRegistration.save();
-        } else {
-            // Create new pending registration
-            const newPendingRegistration = new TempRegistration({
-                username,
-                fullname,
-                email,
-                password: bcrypt.hashSync(password, 10),
-                otp: otp,
-                expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
-            });
-            await newPendingRegistration.save();
-        }
+        // Prepare user data for Redis storage
+        const userData = {
+            username,
+            fullname,
+            email,
+            password: bcrypt.hashSync(password, 10),
+            otp
+        };
+
+        // Store or update OTP data in Redis with 10 minutes TTL
+        await redisService.storeOTP(email, userData, 600); // 600 seconds = 10 minutes
 
         // Send email to user with the OTP
         try {
@@ -62,7 +53,7 @@ const registerUser = async(req,res)=>{
             console.error("Failed to send verification email:", emailError);
         }
 
-        const message = pendingRegistration 
+        const message = existingOTPData 
             ? "Registration updated successfully. Please verify your email." 
             : "Registration initiated. Please verify your email.";
 
@@ -86,31 +77,21 @@ const verifyUserEmail = async ( req, res ) => {
     }
 
     try {
-        // Find the pending registration by email
-        const pendingRegistration = await TempRegistration.findOne({ email });
+        // Verify OTP using Redis service
+        const verification = await redisService.verifyOTP(email, otp);
 
-        if(!pendingRegistration) {
-            return res.status(404).json({ message: "No pending registration found. Please register first." });
+        if (!verification.valid) {
+            return res.status(400).json({ message: verification.message });
         }
 
-        // Check if the OTP matches
-        if(pendingRegistration.otp !== otp) {
-            return res.status(400).json({ message: "Invalid OTP" });
-        }
-
-        // Check if registration has expired
-        if(pendingRegistration.expiresAt < new Date()) {
-            // Delete expired registration
-            await TempRegistration.findByIdAndDelete(pendingRegistration._id);
-            return res.status(400).json({ message: "Registration has expired. Please register again." });
-        }
+        const userData = verification.data;
 
         // Create the actual user in the database
         const newUser = new User({
-            username: pendingRegistration.username,
-            fullname: pendingRegistration.fullname,
-            email: pendingRegistration.email,
-            password: pendingRegistration.password
+            username: userData.username,
+            fullname: userData.fullname,
+            email: userData.email,
+            password: userData.password
         });
 
         await newUser.save();
@@ -126,8 +107,8 @@ const verifyUserEmail = async ( req, res ) => {
 
         await defaultCategory.save();
 
-        // Delete the temporary registration
-        await TempRegistration.findByIdAndDelete(pendingRegistration._id);
+        // Delete the OTP data from Redis (automatically expires with TTL, but we'll delete it explicitly)
+        await redisService.deleteOTP(email);
 
         return res.status(200).json({ 
             message: "Email verified successfully",
@@ -274,27 +255,15 @@ const resendOTP = async (req, res) => {
             return res.status(400).json({ message: "Email is required" });
         }
 
-        // Check if there's a pending registration for this email
-        const pendingRegistration = await TempRegistration.findOne({ email });
-
-        if (!pendingRegistration) {
-            return res.status(404).json({ message: "No pending registration found for this email. Please register first." });
-        }
-
-        // Check if registration has expired
-        if(pendingRegistration.expiresAt < new Date()) {
-            // Delete expired registration
-            await TempRegistration.findByIdAndDelete(pendingRegistration._id);
-            return res.status(400).json({ message: "Registration has expired. Please register again." });
-        }
-
         // Generate new OTP
         const otp = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
         
-        // Update pending registration with new OTP and extend expiry
-        pendingRegistration.otp = otp;
-        pendingRegistration.expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-        await pendingRegistration.save();
+        // Update OTP in Redis with new TTL
+        const updateResult = await redisService.updateOTP(email, otp, 600); // 600 seconds = 10 minutes
+
+        if (!updateResult.success) {
+            return res.status(404).json({ message: updateResult.message });
+        }
 
         // Send new OTP email
         try {
@@ -311,19 +280,6 @@ const resendOTP = async (req, res) => {
     }
 }
 
-//function for cleaning up expired temporary registrations
-const cleanupExpiredRegistrations = async () => {
-    try {
-        const result = await TempRegistration.deleteMany({
-            expiresAt: { $lt: new Date() }
-        });
-        console.log(`Cleaned up ${result.deletedCount} expired registrations`);
-    } catch (error) {
-        console.error("Error cleaning up expired registrations:", error);
-    }
-};
-
-// Run cleanup every 5 minutes
-setInterval(cleanupExpiredRegistrations, 5 * 60 * 1000);
+// Note: Redis automatically handles TTL expiration, so no cleanup function needed
 
 export {registerUser, loginUser, logoutUser, deleteUser, verifyUserEmail, resendOTP};

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import connectDB from './config/connectDB.js';
+import redisService from './services/redisService.js';
 import cookieParser from 'cookie-parser';
 import userRouter from './routes/user.route.js';
 import categoryRouter from './routes/category.route.js';
@@ -32,6 +33,15 @@ app.use('/api/task',taskRouter);
 app.use('/api/notifications', notificationRouter);
 
 await connectDB();
+
+// Initialize Redis connection
+try {
+    await redisService.connect();
+    console.log('Redis connected successfully');
+} catch (error) {
+    console.error('Failed to connect to Redis:', error);
+    // Continue without Redis - you might want to handle this differently in production
+}
 
 const server = createServer(app);
 const io = new Server(server, {
