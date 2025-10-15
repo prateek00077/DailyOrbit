@@ -40,7 +40,6 @@ try {
     console.log('Redis connected successfully');
 } catch (error) {
     console.error('Failed to connect to Redis:', error);
-    // Continue without Redis - you might want to handle this differently in production
 }
 
 const server = createServer(app);
@@ -52,7 +51,6 @@ const io = new Server(server, {
     }
 });
 
-// Socket.IO authentication middleware
 io.use((socket, next) => {
     const token = socket.handshake.auth.token;
     if (!token) {
