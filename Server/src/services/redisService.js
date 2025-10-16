@@ -1,5 +1,4 @@
 import { createClient } from 'redis';
-import bcrypt from 'bcryptjs';
 
 class RedisService {
     constructor() {

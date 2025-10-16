@@ -9,7 +9,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api':'http://localhost:3000', // change to your backend port if different
+      '/api':'http://localhost:3000',
     },
   },
 });
