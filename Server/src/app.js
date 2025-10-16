@@ -51,7 +51,6 @@ const io = new Server(server, {
     }
 });
 
-// Socket.IO authentication middleware
 io.use((socket, next) => {
     const token = socket.handshake.auth.token;
     if (!token) {
