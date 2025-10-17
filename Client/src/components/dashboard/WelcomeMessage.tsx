@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 
 const WelcomeMessage: React.FC = () => {
+  const { quote } = useApp();
   const { user } = useApp();
   const [greeting, setGreeting] = useState('');
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ const WelcomeMessage: React.FC = () => {
             {greeting}, {user?.fullname}!
           </h1>
           <p className="text-indigo-100 mt-2">
-            Welcome to your daily task planner. Here's your progress for today.
+            {quote ? quote : "keep going..."}
           </p>
         </div>
         <div className="flex items-center space-x-4">

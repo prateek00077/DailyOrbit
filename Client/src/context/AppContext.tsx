@@ -5,6 +5,7 @@ interface AppContextType {
   user: User | null;
   categories: Category[];
   tasks: Task[];
+  quote: String;
 
   deleteUser: () => Promise<void>;
   addNewTask: (task: Omit<Task, '_id' | 'createdAt'>) => Promise<void>;
@@ -27,6 +28,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [user, setUser] = useState<User | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [quote, setQuote] = useState<String>("");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!localStorage.getItem('token'));
 
   // Map backend category to frontend Category type (add icon/color defaults if needed)
@@ -76,6 +78,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .then(data => setTasks(
           (data.tasks || []).map(mapTask)
         ));
+      
+      // Fetch quotes from the backend
+      fetch('/api/quote/get', {
+        headers : { Authorization: `Bearer ${token}`}
+      })
+      .then(res => res.ok ? res.json() : { quote: ""})
+      .then(data => setQuote(
+        (data.quote || "")
+      ))
     } else {
       setUser(null);
       setCategories([]);
@@ -308,6 +319,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider
       value={{
         user,
+        quote,
         categories,
         tasks,
         addNewTask,
