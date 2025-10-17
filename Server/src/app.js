@@ -1,6 +1,7 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import connectDB from './config/connectDB.js';
@@ -10,9 +11,9 @@ import userRouter from './routes/user.route.js';
 import categoryRouter from './routes/category.route.js';
 import taskRouter from './routes/task.route.js';
 import notificationRouter from './routes/notification.route.js';
+import genaiRouter from './routes/genAi.route.js';
 
 const app = express();
-dotenv.config();
 
 app.use(cors({
     origin: process.env.CLIENT_URL,
@@ -31,6 +32,7 @@ app.use('/api/user', userRouter);
 app.use('/api/category', categoryRouter);
 app.use('/api/task',taskRouter);
 app.use('/api/notifications', notificationRouter);
+app.use('/api/quote', genaiRouter);
 
 await connectDB();
 

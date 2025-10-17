@@ -12,9 +12,6 @@ export const createNotification = async (notificationData) => {
         global.io.to(userSocketId).emit('notification', savedNotification);
       }
     }
-    
-    // RabbitMQ removed; real-time delivery handled via Socket.IO only
-    
     return savedNotification;
   } catch (error) {
     console.error('Error creating notification:', error);
