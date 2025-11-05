@@ -66,12 +66,12 @@ io.use((socket, next) => {
 const userSockets = new Map();
 
 io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
+    //console.log('User connected:', socket.id);
     
     // Store user socket connection
     socket.on('user_connected', (userId) => {
         userSockets.set(userId, socket.id);
-        console.log(`User ${userId} connected with socket ${socket.id}`);
+        //console.log(`User ${userId} connected with socket ${socket.id}`);
     });
 
     socket.on('disconnect', () => {
@@ -79,7 +79,7 @@ io.on('connection', (socket) => {
         for (const [userId, socketId] of userSockets.entries()) {
             if (socketId === socket.id) {
                 userSockets.delete(userId);
-                console.log(`User ${userId} disconnected`);
+                //console.log(`User ${userId} disconnected`);
                 break;
             }
         }

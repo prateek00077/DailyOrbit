@@ -17,7 +17,6 @@ async function generateQuote(req, res) {
     const response = result.response;
     const text = response.text();
 
-    console.log("Generated Quote:", text);
     res.json({ quote: text });
 
   } catch (error) {
